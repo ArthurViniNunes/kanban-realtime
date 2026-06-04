@@ -4,21 +4,23 @@ import { prisma } from '../../lib/prisma.js';
 export class CardsService {
   async createCard(
     userId: string,
-    data: { boardId: string; columnId: string; title: string; order: number },
+    data: { columnId: string; title: string; order: number },
   ) {
-    await requireBoardAccess(userId, data.boardId);
-
     const column = await prisma.column.findUnique({
       where: { id: data.columnId },
       select: { boardId: true },
     });
 
-    if (!column || column.boardId !== data.boardId) {
-      throw new Error('Invalid column for board');
-    }
+    if (!column) throw new Error('Column not found');
+
+    await requireBoardAccess(userId, column.boardId);
 
     return prisma.card.create({
-      data,
+      data: {
+        columnId: data.columnId,
+        title: data.title,
+        order: data.order,
+      },
     });
   }
 

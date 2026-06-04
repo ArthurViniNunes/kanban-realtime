@@ -7,12 +7,8 @@ type JwtPayload = {
   email: string;
 };
 
-export interface AuthRequest extends Request {
-  user?: JwtPayload;
-}
-
 export function authMiddleware(
-  req: AuthRequest,
+  req: Request,
   res: Response,
   next: NextFunction,
 ) {
