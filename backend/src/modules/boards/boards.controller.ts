@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createBoardSchema } from './boards.schemas.js';
 import { BoardsService } from './boards.service.js';
+import { assertStringParam } from '../../lib/http/assertStringParam.js';
 
 const boardsService = new BoardsService();
 
@@ -146,20 +147,12 @@ export class BoardsController {
    *         description: Board not found
    */
   async delete(req: Request, res: Response) {
-    const userId = req.user?.sub;
+    const userId = req.user!.sub;
 
-    if (!userId) {
-      return res.status(401).json({ error: 'Unauthorized' });
-    }
-
-    const { id } = req.params;
-
-    if (!id || Array.isArray(id)) {
-      return res.status(400).json({ error: 'Invalid board id' });
-    }
+    const id = assertStringParam(req.params.id, 'id');
 
     await boardsService.deleteBoard(userId, id);
 
-    return res.status(204).send();
+    return res.sendStatus(204);
   }
 }

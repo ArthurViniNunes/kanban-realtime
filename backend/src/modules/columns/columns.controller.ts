@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { createColumnSchema } from './columns.schemas.js';
 import { ColumnsService } from './columns.service.js';
+import { assertStringParam } from '../../lib/http/assertStringParam.js';
 
 const service = new ColumnsService();
 
@@ -121,11 +122,7 @@ export class ColumnsController {
    *         description: Forbidden (no board access)
    */
   async listByBoard(req: Request, res: Response) {
-    const { boardId } = req.query;
-
-    if (!boardId || typeof boardId !== 'string') {
-      return res.status(400).json({ error: 'boardId required' });
-    }
+    const boardId = assertStringParam(req.query.boardId, 'boardId');
 
     const userId = req.user!.sub;
 
@@ -164,17 +161,13 @@ export class ColumnsController {
    *         description: Column not found
    */
   async delete(req: Request, res: Response) {
-    const { id } = req.params;
-
-    if (!id || Array.isArray(id)) {
-      return res.status(400).json({ error: 'Invalid column id' });
-    }
+    const id = assertStringParam(req.params.id, 'id');
 
     const userId = req.user!.sub;
 
     try {
       await service.deleteColumn(userId, id);
-      return res.status(204).send();
+      return res.sendStatus(204);
     } catch (err: any) {
       return res.status(400).json({ error: err.message });
     }

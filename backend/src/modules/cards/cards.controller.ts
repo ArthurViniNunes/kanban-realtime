@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { CardsService } from './cards.service.js';
 import { createCardSchema, moveCardSchema } from './cards.schemas.js';
+import { assertStringParam } from '../../lib/http/assertStringParam.js';
 
 const service = new CardsService();
 
@@ -116,7 +117,7 @@ export class CardsController {
    *         description: Forbidden
    */
   async listByColumn(req: Request, res: Response) {
-    const { columnId } = req.params;
+    const columnId = assertStringParam(req.query.columnId, 'columnId');
     const userId = req.user!.sub;
 
     const cards = await service.getByColumn(userId, columnId.toString());
@@ -205,12 +206,8 @@ export class CardsController {
    *         description: Card not found
    */
   async delete(req: Request, res: Response) {
-    const { id } = req.params;
+    const id = assertStringParam(req.params.id, 'id');
     const userId = req.user!.sub;
-
-    if (!id || Array.isArray(id)) {
-      return res.status(400).json({ error: 'Invalid card id' });
-    }
 
     try {
       await service.deleteCard(userId, id);
