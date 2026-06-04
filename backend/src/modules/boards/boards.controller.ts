@@ -35,4 +35,18 @@ export class BoardsController {
 
     return res.json(boards);
   }
+
+  async delete(req: AuthRequest, res: Response) {
+    const userId = req.user?.sub;
+
+    if (!userId) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { boardId } = req.params;
+
+    await boardsService.deleteBoard(userId, boardId.toString());
+
+    return res.status(204).send();
+  }
 }
