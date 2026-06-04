@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../env.js';
+import { prisma } from '../lib/prisma.js';
 import { UnauthorizedError } from '../errors/http-errors.js';
 
 type JwtPayload = {
@@ -12,30 +13,43 @@ export interface AuthRequest extends Request {
   user?: JwtPayload;
 }
 
-export function authMiddleware(
+export async function authMiddleware(
   req: AuthRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction,
 ) {
   const authHeader = req.headers.authorization;
 
   if (!authHeader) {
-    return res.status(401).json({ error: 'Missing token' });
+    return next(new UnauthorizedError('Missing token'));
   }
 
   const token = authHeader.split(' ')[1];
 
   if (!token) {
-    return res.status(401).json({ error: 'Invalid token format' });
+    return next(new UnauthorizedError('Invalid token format'));
   }
 
   try {
     const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.sub },
+      select: {
+        id: true,
+        email: true,
+        deletedAt: true,
+      },
+    });
+
+    if (!user || user.deletedAt) {
+      return next(new UnauthorizedError('User not authorized'));
+    }
+
     req.user = decoded;
 
     return next();
   } catch {
-    throw new UnauthorizedError('Invalid token');
+    return next(new UnauthorizedError('Invalid token'));
   }
 }

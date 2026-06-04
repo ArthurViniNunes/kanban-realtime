@@ -5,6 +5,7 @@ import { signToken } from '../../lib/jwt.js';
 import {
   BadRequestError,
   UnauthorizedError,
+  NotFoundError,
 } from '../../errors/http-errors.js';
 
 export class AuthService {
@@ -43,6 +44,10 @@ export class AuthService {
       throw new UnauthorizedError('Invalid credentials');
     }
 
+    if (user.deletedAt) {
+      throw new UnauthorizedError('Account has been deleted');
+    }
+
     const passwordMatch = await bcrypt.compare(data.password, user.password);
 
     if (!passwordMatch) {
@@ -65,5 +70,27 @@ export class AuthService {
         expiresIn: env.JWT_EXPIRES_IN,
       },
     };
+  }
+
+  async deleteUser(userId: string) {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, deletedAt: true },
+    });
+
+    if (!user) {
+      throw new NotFoundError('User not found');
+    }
+
+    if (user.deletedAt) {
+      throw new BadRequestError('User already deleted');
+    }
+
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
   }
 }

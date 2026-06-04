@@ -1,5 +1,6 @@
 import { boardAccess } from '../../lib/access/board-access.js';
 import { prisma } from '../../lib/prisma.js';
+import { NotFoundError } from '../../errors/http-errors.js';
 
 export class CardsService {
   async createCard(
@@ -11,7 +12,7 @@ export class CardsService {
       select: { boardId: true },
     });
 
-    if (!column) throw new Error('Column not found');
+    if (!column) throw new NotFoundError('Column not found');
 
     await boardAccess.ensureAccess(userId, column.boardId);
 
@@ -30,7 +31,7 @@ export class CardsService {
       select: { boardId: true },
     });
 
-    if (!column) throw new Error('Not found');
+    if (!column) throw new NotFoundError('Column not found');
 
     await boardAccess.ensureAccess(userId, column.boardId);
 
@@ -49,13 +50,13 @@ export class CardsService {
       include: { column: true },
     });
 
-    if (!card) throw new Error('Not found');
+    if (!card) throw new NotFoundError('Card not found');
 
     const targetColumn = await prisma.column.findUnique({
       where: { id: data.toColumnId },
     });
 
-    if (!targetColumn) throw new Error('Target column not found');
+    if (!targetColumn) throw new NotFoundError('Target column not found');
 
     await boardAccess.ensureAccess(userId, targetColumn.boardId);
 
@@ -74,7 +75,7 @@ export class CardsService {
       include: { column: true },
     });
 
-    if (!card) throw new Error('Not found');
+    if (!card) throw new NotFoundError('Card not found');
 
     await boardAccess.ensureAccess(userId, card.column.boardId);
 

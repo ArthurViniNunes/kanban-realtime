@@ -215,4 +215,46 @@ export class AuthController {
 
     return res.json(user);
   }
+
+  /**
+   * @openapi
+   * /users/me:
+   *   delete:
+   *     security:
+   *       - bearerAuth: []
+   *     tags:
+   *       - Users
+   *     summary: Delete authenticated user
+   *     description: Soft deletes the currently authenticated user. A user can only delete their own account.
+   *     responses:
+   *       204:
+   *         description: User deleted successfully
+   *       401:
+   *         description: Unauthorized - missing or invalid token
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *                   example: Unauthorized
+   *       404:
+   *         description: User not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *                   example: User not found
+   */
+  async deleteUser(req: Request, res: Response) {
+    const userId = req.user!.sub;
+
+    await authService.deleteUser(userId);
+
+    return res.status(200).json({ message: 'User deleted successfully' });
+  }
 }
