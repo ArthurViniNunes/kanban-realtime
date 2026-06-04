@@ -6,7 +6,7 @@ import { columnsRoutes } from './modules/columns/columns.routes.js';
 import { cardsRoutes } from './modules/cards/cards.routes.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './docs/swagger.js';
-import { errorMiddleware } from './middlewares/error.middleware.js';
+import { errorHandler } from './middlewares/error.middleware.js';
 
 const app = express();
 
@@ -24,6 +24,6 @@ app.use('/boards', boardsRoutes);
 app.use('/columns', columnsRoutes);
 app.use('/cards', cardsRoutes);
 
-app.use(errorMiddleware);
+app.use(errorHandler);
 
 export default app;
