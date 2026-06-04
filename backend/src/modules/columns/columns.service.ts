@@ -1,19 +1,22 @@
-import { requireBoardAccess } from '../../lib/access/board-access.js';
+import { boardAccess } from '../../lib/access/board-access.js';
 import { prisma } from '../../lib/prisma.js';
+import { NotFoundError } from '../../errors/http-errors.js';
 
 export class ColumnsService {
   async createColumn(
     userId: string,
     data: { boardId: string; title: string; order: number },
   ) {
-    await requireBoardAccess(userId, data.boardId);
+    await boardAccess.ensureAccess(userId, data.boardId);
+
     return prisma.column.create({
       data,
     });
   }
 
   async getByBoard(userId: string, boardId: string) {
-    await requireBoardAccess(userId, boardId);
+    await boardAccess.ensureAccess(userId, boardId);
+
     return prisma.column.findMany({
       where: { boardId },
       orderBy: { order: 'asc' },
@@ -28,11 +31,13 @@ export class ColumnsService {
       where: { id: columnId },
     });
 
-    if (!column) throw new Error('Not found');
+    if (!column) {
+      throw new NotFoundError('Column not found');
+    }
 
-    await requireBoardAccess(userId, column.boardId);
+    await boardAccess.ensureAccess(userId, column.boardId);
 
-    // Delete cards in the column first due to foreign key constraints
+    // garante consistência antes de deletar coluna
     await prisma.card.deleteMany({
       where: { columnId },
     });

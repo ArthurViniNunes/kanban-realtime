@@ -1,35 +1,30 @@
 import { prisma } from '../prisma.js';
+import { ForbiddenError } from '../../errors/http-errors.js';
 
-export async function getBoardMembership(userId: string, boardId: string) {
-  return prisma.boardMember.findFirst({
-    where: {
-      userId,
-      boardId,
-    },
-  });
-}
+class BoardAccess {
+  async ensureAccess(userId: string, boardId: string) {
+    const member = await prisma.boardMember.findFirst({
+      where: { userId, boardId },
+    });
 
-export async function canAccessBoard(userId: string, boardId: string) {
-  const member = await getBoardMembership(userId, boardId);
-  return !!member;
-}
-
-export async function requireBoardAccess(userId: string, boardId: string) {
-  const member = await getBoardMembership(userId, boardId);
-
-  if (!member) {
-    throw new Error('Unauthorized');
+    if (!member) {
+      throw new ForbiddenError('No access to this board');
+    }
   }
 
-  return member;
-}
+  async ensureOwner(userId: string, boardId: string) {
+    const owner = await prisma.boardMember.findFirst({
+      where: {
+        userId,
+        boardId,
+        role: 'owner',
+      },
+    });
 
-export async function requireBoardOwner(userId: string, boardId: string) {
-  const member = await getBoardMembership(userId, boardId);
-
-  if (!member || member.role !== 'owner') {
-    throw new Error('Unauthorized');
+    if (!owner) {
+      throw new ForbiddenError('Only owner allowed');
+    }
   }
-
-  return member;
 }
+
+export const boardAccess = new BoardAccess();

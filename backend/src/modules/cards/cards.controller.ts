@@ -209,11 +209,8 @@ export class CardsController {
     const id = assertStringParam(req.params.id, 'id');
     const userId = req.user!.sub;
 
-    try {
-      await service.deleteCard(userId, id);
-      return res.status(204).send();
-    } catch (err: any) {
-      return res.status(400).json({ error: err.message });
-    }
+    await service.deleteCard(userId, id);
+
+    return res.sendStatus(204);
   }
 }

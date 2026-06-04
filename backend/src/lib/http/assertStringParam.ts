@@ -1,9 +1,4 @@
-export class BadRequestError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'BadRequestError';
-  }
-}
+import { BadRequestError } from '../../errors/http-errors.js';
 
 export function assertStringParam(value: unknown, fieldName: string): string {
   if (typeof value !== 'string' || value.trim().length === 0) {

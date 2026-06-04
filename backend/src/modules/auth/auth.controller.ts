@@ -76,14 +76,9 @@ export class AuthController {
       });
     }
 
-    try {
-      const user = await authService.register(parsed.data);
-      return res.status(201).json(user);
-    } catch (err: any) {
-      return res.status(400).json({
-        error: err.message,
-      });
-    }
+    const user = await authService.register(parsed.data);
+
+    return res.status(201).json(user);
   }
 
   /**
@@ -151,14 +146,8 @@ export class AuthController {
       });
     }
 
-    try {
-      const result = await authService.login(parsed.data);
-      return res.status(200).json(result);
-    } catch (err: any) {
-      return res.status(401).json({
-        error: err.message,
-      });
-    }
+    const result = await authService.login(parsed.data);
+    return res.status(200).json(result);
   }
 
   /**

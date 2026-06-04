@@ -1,5 +1,6 @@
 import { prisma } from '../../lib/prisma.js';
-import { requireBoardOwner } from '../../lib/access/board-access.js';
+import { boardAccess } from '../../lib/access/board-access.js';
+import { ForbiddenError, NotFoundError } from '../../errors/http-errors.js';
 
 export class BoardsService {
   async createBoard(userId: string, title: string) {
@@ -19,7 +20,10 @@ export class BoardsService {
         },
       });
 
-      return board;
+      return {
+        board,
+        role: 'owner',
+      };
     });
   }
 
@@ -36,29 +40,41 @@ export class BoardsService {
     });
   }
 
-  async isBoardOwner(userId: string, boardId: string) {
-    return prisma.boardMember.findFirst({
-      where: {
-        userId,
-        boardId,
-        role: 'owner',
-      },
+  async ensureBoardOwner(userId: string, boardId: string) {
+    const member = await prisma.boardMember.findFirst({
+      where: { userId, boardId, role: 'owner' },
     });
+
+    if (!member) {
+      throw new ForbiddenError('You are not the board owner');
+    }
   }
 
   async deleteBoard(userId: string, boardId: string) {
-    await requireBoardOwner(userId, boardId);
+    await boardAccess.ensureOwner(userId, boardId);
 
     return prisma.$transaction(async (tx) => {
-      await tx.boardMember.deleteMany({ where: { boardId } });
-
-      await tx.column.deleteMany({ where: { boardId } });
-
       await tx.card.deleteMany({
         where: { column: { boardId } },
       });
 
-      return tx.board.delete({ where: { id: boardId } });
+      await tx.column.deleteMany({
+        where: { boardId },
+      });
+
+      await tx.boardMember.deleteMany({
+        where: { boardId },
+      });
+
+      const board = await tx.board.delete({
+        where: { id: boardId },
+      });
+
+      if (!board) {
+        throw new NotFoundError('Board not found');
+      }
+
+      return board;
     });
   }
 }

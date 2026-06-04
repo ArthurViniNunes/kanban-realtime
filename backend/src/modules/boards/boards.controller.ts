@@ -68,17 +68,11 @@ export class BoardsController {
       });
     }
 
-    try {
-      const userId = req.user!.sub;
+    const userId = req.user!.sub;
 
-      const board = await boardsService.createBoard(userId, parsed.data.title);
+    const board = await boardsService.createBoard(userId, parsed.data.title);
 
-      return res.status(201).json(board);
-    } catch (err: any) {
-      return res.status(400).json({
-        error: err.message,
-      });
-    }
+    return res.status(201).json(board);
   }
 
   /**

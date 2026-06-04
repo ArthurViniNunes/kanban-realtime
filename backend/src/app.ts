@@ -6,10 +6,12 @@ import { columnsRoutes } from './modules/columns/columns.routes.js';
 import { cardsRoutes } from './modules/cards/cards.routes.js';
 import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './docs/swagger.js';
+import { errorMiddleware } from './middlewares/error.middleware.js';
 
 const app = express();
 
 app.use(express.json());
+app.use(router);
 
 app.get('/health', (_, res) => {
   res.json({ status: 'ok' });
@@ -17,10 +19,11 @@ app.get('/health', (_, res) => {
 
 app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-app.use(router);
 app.use('/auth', authRoutes);
 app.use('/boards', boardsRoutes);
 app.use('/columns', columnsRoutes);
 app.use('/cards', cardsRoutes);
+
+app.use(errorMiddleware);
 
 export default app;

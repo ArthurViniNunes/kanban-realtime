@@ -1,14 +1,19 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { env } from '../env.js';
+import { UnauthorizedError } from '../errors/http-errors.js';
 
 type JwtPayload = {
   sub: string;
   email: string;
 };
 
+export interface AuthRequest extends Request {
+  user?: JwtPayload;
+}
+
 export function authMiddleware(
-  req: Request,
+  req: AuthRequest,
   res: Response,
   next: NextFunction,
 ) {
@@ -31,6 +36,6 @@ export function authMiddleware(
 
     return next();
   } catch {
-    return res.status(401).json({ error: 'Invalid token' });
+    throw new UnauthorizedError('Invalid token');
   }
 }

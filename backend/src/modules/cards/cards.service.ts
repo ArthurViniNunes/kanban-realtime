@@ -1,4 +1,4 @@
-import { requireBoardAccess } from '../../lib/access/board-access.js';
+import { boardAccess } from '../../lib/access/board-access.js';
 import { prisma } from '../../lib/prisma.js';
 
 export class CardsService {
@@ -13,7 +13,7 @@ export class CardsService {
 
     if (!column) throw new Error('Column not found');
 
-    await requireBoardAccess(userId, column.boardId);
+    await boardAccess.ensureAccess(userId, column.boardId);
 
     return prisma.card.create({
       data: {
@@ -32,7 +32,7 @@ export class CardsService {
 
     if (!column) throw new Error('Not found');
 
-    await requireBoardAccess(userId, column.boardId);
+    await boardAccess.ensureAccess(userId, column.boardId);
 
     return prisma.card.findMany({
       where: { columnId },
@@ -57,7 +57,7 @@ export class CardsService {
 
     if (!targetColumn) throw new Error('Target column not found');
 
-    await requireBoardAccess(userId, targetColumn.boardId);
+    await boardAccess.ensureAccess(userId, targetColumn.boardId);
 
     return prisma.card.update({
       where: { id: data.cardId },
@@ -76,7 +76,7 @@ export class CardsService {
 
     if (!card) throw new Error('Not found');
 
-    await requireBoardAccess(userId, card.column.boardId);
+    await boardAccess.ensureAccess(userId, card.column.boardId);
 
     return prisma.card.delete({
       where: { id: cardId },

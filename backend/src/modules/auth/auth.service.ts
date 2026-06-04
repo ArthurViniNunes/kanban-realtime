@@ -2,6 +2,10 @@ import { env } from '../../env.js';
 import { prisma } from '../../lib/prisma.js';
 import bcrypt from 'bcrypt';
 import { signToken } from '../../lib/jwt.js';
+import {
+  BadRequestError,
+  UnauthorizedError,
+} from '../../errors/http-errors.js';
 
 export class AuthService {
   async register(data: { name: string; email: string; password: string }) {
@@ -10,7 +14,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new Error('User already exists');
+      throw new BadRequestError('Email is already in use');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -36,13 +40,13 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     const passwordMatch = await bcrypt.compare(data.password, user.password);
 
     if (!passwordMatch) {
-      throw new Error('Invalid credentials');
+      throw new UnauthorizedError('Invalid credentials');
     }
 
     const token = signToken({

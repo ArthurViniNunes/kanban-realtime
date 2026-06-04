@@ -70,13 +70,9 @@ export class ColumnsController {
 
     const userId = req.user!.sub;
 
-    try {
-      const column = await service.createColumn(userId, parsed.data);
+    const column = await service.createColumn(userId, parsed.data);
 
-      return res.status(201).json(column);
-    } catch (err: any) {
-      return res.status(400).json({ error: err.message });
-    }
+    return res.status(201).json(column);
   }
 
   /**
@@ -165,11 +161,7 @@ export class ColumnsController {
 
     const userId = req.user!.sub;
 
-    try {
-      await service.deleteColumn(userId, id);
-      return res.sendStatus(204);
-    } catch (err: any) {
-      return res.status(400).json({ error: err.message });
-    }
+    await service.deleteColumn(userId, id);
+    return res.sendStatus(204);
   }
 }
