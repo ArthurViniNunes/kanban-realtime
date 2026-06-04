@@ -218,12 +218,12 @@ export class AuthController {
 
   /**
    * @openapi
-   * /users/me:
+   * /auth/me:
    *   delete:
    *     security:
    *       - bearerAuth: []
    *     tags:
-   *       - Users
+   *       - Auth
    *     summary: Delete authenticated user
    *     description: Soft deletes the currently authenticated user. A user can only delete their own account.
    *     responses:
@@ -255,6 +255,6 @@ export class AuthController {
 
     await authService.deleteUser(userId);
 
-    return res.status(200).json({ message: 'User deleted successfully' });
+    return res.status(204).json({ message: 'User deleted successfully' });
   }
 }
