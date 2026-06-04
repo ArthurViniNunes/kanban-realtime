@@ -7,25 +7,13 @@ datasource db {
   provider  = "postgresql"
 }
 
-model User {
-  id        String   @id @default(cuid())
-
-  name      String
-  email     String   @unique
-  password  String
-
-  boards    Board[]
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
 model Board {
   id        String   @id @default(cuid())
   title     String
 
   userId    String
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  members BoardMember[]
 
   columns   Column[]
 
@@ -33,6 +21,34 @@ model Board {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+model BoardMember {
+  id      String @id @default(cuid())
+
+  userId  String
+  boardId String
+
+  role    String @default("member") // owner | admin | member
+
+  user    User   @relation(fields: [userId], references: [id])
+  board   Board  @relation(fields: [boardId], references: [id])
+}
+
+model Card {
+  id        String   @id @default(cuid())
+  title     String
+  description String?
+
+  order     Int
+
+  columnId  String
+  column    Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([columnId])
 }
 
 model Column {
@@ -51,18 +67,18 @@ model Column {
   @@index([boardId])
 }
 
-model Card {
+model User {
   id        String   @id @default(cuid())
-  title     String
-  description String?
 
-  order     Int
+  name      String
+  email     String   @unique
+  password  String
 
-  columnId  String
-  column    Column   @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  boards    Board[]
+
+  members BoardMember[]
+  boards  Board[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  @@index([columnId])
 }
