@@ -13,6 +13,8 @@
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
 
+    "types": ["node"],
+
     "forceConsistentCasingInFileNames": true,
 
     "skipLibCheck": true,
