@@ -74,8 +74,6 @@ model User {
   email     String   @unique
   password  String
 
-  boards    Board[]
-
   members BoardMember[]
   boards  Board[]
 
