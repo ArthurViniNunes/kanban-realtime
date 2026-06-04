@@ -1,0 +1,12 @@
+{
+  "name": "kanban-realtime",
+  "private": true,
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "scripts": {
+    "frontend": "npm run dev -w frontend",
+    "backend": "npm run dev -w backend"
+  }
+}
