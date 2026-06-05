@@ -86,7 +86,7 @@ export class ColumnsController {
    *     summary: List columns by board
    *     description: Returns all columns of a specific board.
    *     parameters:
-   *       - in: query
+   *       - in: path
    *         name: boardId
    *         required: true
    *         schema:
@@ -118,7 +118,7 @@ export class ColumnsController {
    *         description: Forbidden (no board access)
    */
   async listByBoard(req: Request, res: Response) {
-    const boardId = assertStringParam(req.query.boardId, 'boardId');
+    const boardId = assertStringParam(req.params.boardId, 'boardId');
 
     const userId = req.user!.sub;
 
