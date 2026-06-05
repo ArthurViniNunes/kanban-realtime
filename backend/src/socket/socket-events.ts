@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
 
 export function registerSocketEvents(io: Server) {
+  const boardUsers = new Map<string, Set<string>>();
   io.on('connection', (socket: Socket) => {
     const userId = socket.data.user?.sub;
 
@@ -17,10 +18,7 @@ export function registerSocketEvents(io: Server) {
      */
     socket.on('board:join', async (boardId: string) => {
       const member = await prisma.boardMember.findFirst({
-        where: {
-          userId,
-          boardId,
-        },
+        where: { userId, boardId },
       });
 
       if (!member) {
@@ -29,6 +27,19 @@ export function registerSocketEvents(io: Server) {
       }
 
       socket.join(boardId);
+
+      // 👇 PRESENCE LOGIC
+      if (!boardUsers.has(boardId)) {
+        boardUsers.set(boardId, new Set());
+      }
+
+      boardUsers.get(boardId)!.add(userId);
+
+      // broadcast update
+      io.to(boardId).emit('presence:update', {
+        boardId,
+        users: Array.from(boardUsers.get(boardId)!),
+      });
     });
 
     /**
@@ -36,6 +47,22 @@ export function registerSocketEvents(io: Server) {
      */
     socket.on('board:leave', (boardId: string) => {
       socket.leave(boardId);
+
+      const users = boardUsers.get(boardId);
+
+      if (!users) return;
+
+      users.delete(userId);
+
+      if (users.size === 0) {
+        boardUsers.delete(boardId);
+        return;
+      }
+
+      io.to(boardId).emit('presence:update', {
+        boardId,
+        users: Array.from(users),
+      });
     });
 
     /**
@@ -79,6 +106,26 @@ export function registerSocketEvents(io: Server) {
         });
       } catch {
         return callback({ error: 'Failed to sync board' });
+      }
+    });
+
+    /**
+     * DISCONNECT LOGIC
+     */
+    socket.on('disconnect', () => {
+      for (const [boardId, users] of boardUsers.entries()) {
+        if (users.has(userId)) {
+          users.delete(userId);
+
+          io.to(boardId).emit('presence:update', {
+            boardId,
+            users: Array.from(users),
+          });
+
+          if (users.size === 0) {
+            boardUsers.delete(boardId);
+          }
+        }
       }
     });
 
