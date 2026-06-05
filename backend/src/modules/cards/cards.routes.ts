@@ -13,5 +13,5 @@ router.get('/:columnId', (req, res) => controller.listByColumn(req, res));
 
 router.patch('/move', (req, res) => controller.move(req, res));
 
-router.delete('/cards/:id', (req, res) => controller.delete(req, res));
+router.delete('/:id', (req, res) => controller.delete(req, res));
 export { router as cardsRoutes };
