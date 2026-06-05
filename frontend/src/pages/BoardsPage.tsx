@@ -34,25 +34,63 @@ export function BoardsPage() {
 
   return (
     <div>
-      <h1>Boards</h1>
+      <h1>Meus Boards</h1>
 
-      <input
-        value={title}
-        placeholder="Nome do board"
-        onChange={(e) => setTitle(e.target.value)}
-      />
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+          marginBottom: '2rem',
+        }}
+      >
+        <input
+          value={title}
+          placeholder="Nome do board"
+          onChange={(e) => setTitle(e.target.value)}
+          style={{
+            padding: '0.75rem',
+            minWidth: '300px',
+          }}
+        />
 
-      <button onClick={handleCreateBoard}>Criar</button>
+        <button onClick={handleCreateBoard}>Criar Board</button>
+      </div>
 
-      <ul>
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: '1rem',
+        }}
+      >
         {boards.map((board) => (
-          <li key={board.id}>
-            <Link to={`/boards/${board.id}`}>{board.title}</Link>
+          <div
+            key={board.id}
+            style={{
+              border: '1px solid #ddd',
+              borderRadius: '8px',
+              padding: '1rem',
+              minWidth: '250px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem',
+            }}
+          >
+            <Link
+              to={`/boards/${board.id}`}
+              style={{
+                textDecoration: 'none',
+                fontWeight: 'bold',
+                fontSize: '1.1rem',
+              }}
+            >
+              {board.title}
+            </Link>
 
             <button onClick={() => handleDeleteBoard(board.id)}>Excluir</button>
-          </li>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }

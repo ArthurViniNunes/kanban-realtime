@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-
+import { Layout } from '../components/Layout';
 import { LoginPage } from '../pages/LoginPage';
 import { RegisterPage } from '../pages/RegisterPage';
 import { BoardsPage } from '../pages/BoardsPage';
@@ -17,7 +17,9 @@ export function AppRouter() {
           path="/"
           element={
             <ProtectedRoute>
-              <BoardsPage />
+              <Layout>
+                <BoardsPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
@@ -25,11 +27,12 @@ export function AppRouter() {
           path="/boards/:boardId"
           element={
             <ProtectedRoute>
-              <BoardPage />
+              <Layout>
+                <BoardPage />
+              </Layout>
             </ProtectedRoute>
           }
         />
-        /* Fallback route - should be the last one */
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </BrowserRouter>

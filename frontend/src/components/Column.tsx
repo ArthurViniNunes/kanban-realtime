@@ -40,32 +40,62 @@ export function Column({ id, title }: ColumnProps) {
   return (
     <div
       style={{
-        border: '1px solid #ccc',
+        background: '#f5f5f5',
+        borderRadius: '8px',
         padding: '1rem',
-        minWidth: '250px',
+        minWidth: '300px',
+        maxWidth: '300px',
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '1rem',
       }}
     >
       <h3>{title}</h3>
 
-      <div>
+      <div
+        style={{
+          display: 'flex',
+          gap: '0.5rem',
+        }}
+      >
         <input
           placeholder="Novo card"
           value={newCardTitle}
           onChange={(e) => setNewCardTitle(e.target.value)}
+          style={{
+            flex: 1,
+          }}
         />
 
-        <button onClick={handleCreateCard}>Criar</button>
+        <button onClick={handleCreateCard}>+</button>
       </div>
 
-      <ul>
+      <div
+        style={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '0.5rem',
+        }}
+      >
         {cards.map((card) => (
-          <li key={card.id}>
-            {card.title}
+          <div
+            key={card.id}
+            style={{
+              background: 'white',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              padding: '0.75rem',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}
+          >
+            <span>{card.title}</span>
 
-            <button onClick={() => handleDeleteCard(card.id)}>Excluir</button>
-          </li>
+            <button onClick={() => handleDeleteCard(card.id)}>×</button>
+          </div>
         ))}
-      </ul>
+      </div>
     </div>
   );
 }
