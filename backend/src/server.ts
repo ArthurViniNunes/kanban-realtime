@@ -1,7 +1,21 @@
-import app from "./app.js";
+import http from 'http';
+import app from './app.js';
+import { Server } from 'socket.io';
+import { socketAuthMiddleware } from './socket/socket-auth.js';
+import { registerSocketEvents } from './socket/socket-events.js';
 
-const PORT = 3333;
+const httpServer = http.createServer(app);
 
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+export const io = new Server(httpServer, {
+  cors: {
+    origin: '*',
+  },
+});
+
+io.use(socketAuthMiddleware());
+
+registerSocketEvents(io);
+
+httpServer.listen(3333, () => {
+  console.log('HTTP + WS running on 3333');
 });
