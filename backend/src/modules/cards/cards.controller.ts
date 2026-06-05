@@ -85,7 +85,7 @@ export class CardsController {
    *     summary: List cards by column
    *     description: Returns all cards inside a column.
    *     parameters:
-   *       - in: query
+   *       - in: path
    *         name: columnId
    *         required: true
    *         schema:
@@ -117,7 +117,7 @@ export class CardsController {
    *         description: Forbidden
    */
   async listByColumn(req: Request, res: Response) {
-    const columnId = assertStringParam(req.query.columnId, 'columnId');
+    const columnId = assertStringParam(req.params.columnId, 'columnId');
     const userId = req.user!.sub;
 
     const cards = await service.getByColumn(userId, columnId.toString());
