@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-
+import { Link } from 'react-router-dom';
 import { boardsApi, type Board } from '../api/boards.api';
 
 export function BoardsPage() {
@@ -47,7 +47,7 @@ export function BoardsPage() {
       <ul>
         {boards.map((board) => (
           <li key={board.id}>
-            {board.title}
+            <Link to={`/boards/${board.id}`}>{board.title}</Link>
 
             <button onClick={() => handleDeleteBoard(board.id)}>Excluir</button>
           </li>
