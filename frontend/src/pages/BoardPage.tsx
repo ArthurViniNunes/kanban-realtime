@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
-
+import { Column as ColumnComponent } from '../components/Column';
 import { columnsApi, type Column } from '../api/columns.api';
 
 export function BoardPage() {
@@ -51,13 +51,23 @@ export function BoardPage() {
 
       <hr />
 
-      {columns.map((column) => (
-        <div key={column.id}>
-          <h3>{column.title}</h3>
+      <div
+        style={{
+          display: 'flex',
+          gap: '1rem',
+          alignItems: 'flex-start',
+        }}
+      >
+        {columns.map((column) => (
+          <div key={column.id}>
+            <ColumnComponent id={column.id} title={column.title} />
 
-          <button onClick={() => handleDeleteColumn(column.id)}>Excluir</button>
-        </div>
-      ))}
+            <button onClick={() => handleDeleteColumn(column.id)}>
+              Excluir coluna
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
