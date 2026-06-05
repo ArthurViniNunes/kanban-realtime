@@ -1,4 +1,5 @@
 import { api } from './api';
+import type { LoginResponse } from '../types/auth';
 
 export interface LoginRequest {
   email: string;
@@ -12,7 +13,7 @@ export interface RegisterRequest {
 }
 
 export const authApi = {
-  async login(data: LoginRequest) {
+  async login(data: LoginRequest): Promise<LoginResponse> {
     const response = await api.post('/auth/login', data);
 
     return response.data;

@@ -9,7 +9,7 @@ export class AuthService {
       password,
     });
 
-    this.saveToken(data.token);
+    this.saveToken(data.auth.accessToken);
 
     return data;
   }
