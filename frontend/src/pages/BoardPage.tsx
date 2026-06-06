@@ -1,12 +1,15 @@
 import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import { Column as ColumnComponent } from '../components/Column';
 import { columnsApi, type Column } from '../api/columns.api';
+import { boardsApi } from '../api/boards.api';
+import { Button } from '../components/Button';
 
 export function BoardPage() {
   const { boardId } = useParams();
 
   const [columns, setColumns] = useState<Column[]>([]);
+  const [boardTitle, setBoardTitle] = useState('');
   const [title, setTitle] = useState('');
 
   async function loadColumns() {
@@ -33,13 +36,41 @@ export function BoardPage() {
     await loadColumns();
   }
 
+  async function loadBoardTitle() {
+    if (!boardId) return;
+
+    const boards = await boardsApi.list();
+
+    const board = boards.find((board) => board.id === boardId);
+
+    if (board) {
+      setBoardTitle(board.title);
+    }
+  }
+
   useEffect(() => {
     loadColumns();
+    loadBoardTitle();
   }, [boardId]);
 
   return (
     <div>
-      <h1>Board</h1>
+      <div
+        style={{
+          marginBottom: '1rem',
+        }}
+      >
+        <Link
+          to="/"
+          style={{
+            textDecoration: 'none',
+          }}
+        >
+          ← Voltar para Boards
+        </Link>
+      </div>
+
+      <h1>{boardTitle || 'Carregando board...'}</h1>
 
       <input
         placeholder="Nova coluna"
@@ -47,7 +78,7 @@ export function BoardPage() {
         onChange={(e) => setTitle(e.target.value)}
       />
 
-      <button onClick={handleCreateColumn}>Criar coluna</button>
+      <Button onClick={handleCreateColumn}>Criar coluna</Button>
 
       <hr />
 
@@ -62,9 +93,12 @@ export function BoardPage() {
           <div key={column.id}>
             <ColumnComponent id={column.id} title={column.title} />
 
-            <button onClick={() => handleDeleteColumn(column.id)}>
+            <Button
+              variant="danger"
+              onClick={() => handleDeleteColumn(column.id)}
+            >
               Excluir coluna
-            </button>
+            </Button>
           </div>
         ))}
       </div>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-
+import { Button } from './Button';
 import { cardsApi, type Card } from '../api/cards.api';
 
 interface ColumnProps {
@@ -67,7 +67,7 @@ export function Column({ id, title }: ColumnProps) {
           }}
         />
 
-        <button onClick={handleCreateCard}>+</button>
+        <Button onClick={handleCreateCard}>+</Button>
       </div>
 
       <div
@@ -92,7 +92,9 @@ export function Column({ id, title }: ColumnProps) {
           >
             <span>{card.title}</span>
 
-            <button onClick={() => handleDeleteCard(card.id)}>×</button>
+            <Button variant="danger" onClick={() => handleDeleteCard(card.id)}>
+              ×
+            </Button>
           </div>
         ))}
       </div>

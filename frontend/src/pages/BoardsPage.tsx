@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { boardsApi, type Board } from '../api/boards.api';
+import { Button } from '../components/Button';
 
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
@@ -53,7 +54,7 @@ export function BoardsPage() {
           }}
         />
 
-        <button onClick={handleCreateBoard}>Criar Board</button>
+        <Button onClick={handleCreateBoard}>Criar Board</Button>
       </div>
 
       <div
@@ -87,7 +88,12 @@ export function BoardsPage() {
               {board.title}
             </Link>
 
-            <button onClick={() => handleDeleteBoard(board.id)}>Excluir</button>
+            <Button
+              variant="danger"
+              onClick={() => handleDeleteBoard(board.id)}
+            >
+              Excluir
+            </Button>
           </div>
         ))}
       </div>
