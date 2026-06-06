@@ -43,14 +43,22 @@ export function Column({ id, title }: ColumnProps) {
         background: '#f5f5f5',
         borderRadius: '8px',
         padding: '1rem',
-        minWidth: '300px',
-        maxWidth: '300px',
+        width: '100%',
+        maxWidth: '320px',
+        flexShrink: 0,
         display: 'flex',
         flexDirection: 'column',
         gap: '1rem',
       }}
     >
-      <h3>{title}</h3>
+      <h3
+        style={{
+          margin: 0,
+          overflowWrap: 'break-word',
+        }}
+      >
+        {title}
+      </h3>
 
       <div
         style={{
@@ -88,9 +96,17 @@ export function Column({ id, title }: ColumnProps) {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
+              gap: '0.5rem',
             }}
           >
-            <span>{card.title}</span>
+            <span
+              style={{
+                overflowWrap: 'break-word',
+                flex: 1,
+              }}
+            >
+              {card.title}
+            </span>
 
             <Button variant="danger" onClick={() => handleDeleteCard(card.id)}>
               ×

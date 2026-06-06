@@ -42,6 +42,7 @@ export function BoardsPage() {
           display: 'flex',
           gap: '0.5rem',
           marginBottom: '2rem',
+          flexWrap: 'wrap',
         }}
       >
         <input
@@ -50,7 +51,8 @@ export function BoardsPage() {
           onChange={(e) => setTitle(e.target.value)}
           style={{
             padding: '0.75rem',
-            minWidth: '300px',
+            flex: 1,
+            minWidth: '220px',
           }}
         />
 
@@ -71,7 +73,8 @@ export function BoardsPage() {
               border: '1px solid #ddd',
               borderRadius: '8px',
               padding: '1rem',
-              minWidth: '250px',
+              flex: '1 1 250px',
+              maxWidth: '350px',
               display: 'flex',
               flexDirection: 'column',
               gap: '1rem',
@@ -83,6 +86,7 @@ export function BoardsPage() {
                 textDecoration: 'none',
                 fontWeight: 'bold',
                 fontSize: '1.1rem',
+                overflowWrap: 'break-word',
               }}
             >
               {board.title}
