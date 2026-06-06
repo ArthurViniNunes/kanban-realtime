@@ -39,6 +39,8 @@ export function Layout({ children }: LayoutProps) {
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
+            flexWrap: 'wrap',
+            gap: '1rem',
           }}
         >
           <Link
@@ -48,7 +50,13 @@ export function Layout({ children }: LayoutProps) {
               color: 'inherit',
             }}
           >
-            <h2>Kanban Realtime</h2>
+            <h2
+              style={{
+                margin: 0,
+              }}
+            >
+              Kanban Realtime
+            </h2>
           </Link>
 
           <div
@@ -56,11 +64,16 @@ export function Layout({ children }: LayoutProps) {
               display: 'flex',
               alignItems: 'center',
               gap: '1rem',
+              flexWrap: 'wrap',
             }}
           >
             <span
               style={{
                 fontWeight: 600,
+                maxWidth: '200px',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
               }}
             >
               {user?.name}
@@ -77,7 +90,7 @@ export function Layout({ children }: LayoutProps) {
         style={{
           maxWidth: '1200px',
           margin: '0 auto',
-          padding: '2rem',
+          padding: '1rem',
         }}
       >
         {children}
