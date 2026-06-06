@@ -6,13 +6,28 @@ import { BoardsPage } from '../pages/BoardsPage';
 import { BoardPage } from '../pages/BoardPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { NotFoundPage } from '../pages/NotFoundPage';
+import { GuestRoute } from './GuestRoute';
 
 export function AppRouter() {
   return (
     <BrowserRouter>
       <Routes>
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
+        <Route
+          path="/login"
+          element={
+            <GuestRoute>
+              <LoginPage />
+            </GuestRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <GuestRoute>
+              <RegisterPage />
+            </GuestRoute>
+          }
+        />
         <Route
           path="/"
           element={
