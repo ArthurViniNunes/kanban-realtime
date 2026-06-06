@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
 
@@ -28,26 +28,90 @@ export function LoginPage() {
   }
 
   return (
-    <form onSubmit={handleSubmit}>
-      <h1>Login</h1>
+    <div
+      style={{
+        minHeight: '100vh',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: '#f8fafc',
+      }}
+    >
+      <form
+        onSubmit={handleSubmit}
+        style={{
+          backgroundColor: 'white',
+          padding: '2rem',
+          borderRadius: '12px',
+          width: '400px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1rem',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
+        }}
+      >
+        <h1
+          style={{
+            textAlign: 'center',
+            margin: 0,
+          }}
+        >
+          Kanban Realtime
+        </h1>
 
-      <input
-        type="email"
-        placeholder="Email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-      />
+        <p
+          style={{
+            textAlign: 'center',
+            margin: 0,
+          }}
+        >
+          Realize login para acessar seus boards e começar a organizar suas
+          tarefas!
+        </p>
 
-      <input
-        type="password"
-        placeholder="Senha"
-        value={password}
-        onChange={(e) => setPassword(e.target.value)}
-      />
+        <input
+          type="email"
+          placeholder="Email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          style={{
+            padding: '0.75rem',
+          }}
+        />
 
-      <button type="submit">Entrar</button>
+        <input
+          type="password"
+          placeholder="Senha"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          style={{
+            padding: '0.75rem',
+          }}
+        />
 
-      {error && <p>{error}</p>}
-    </form>
+        <button type="submit">Entrar</button>
+
+        {error && (
+          <p
+            style={{
+              color: 'red',
+              margin: 0,
+            }}
+          >
+            {error}
+          </p>
+        )}
+
+        <div
+          style={{
+            textAlign: 'center',
+          }}
+        >
+          <span>Não possui conta? </span>
+
+          <Link to="/register">Criar conta</Link>
+        </div>
+      </form>
+    </div>
   );
 }
