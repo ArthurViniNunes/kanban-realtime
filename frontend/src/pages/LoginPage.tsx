@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
+import { Button } from '@/components/ui/button';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -91,7 +92,7 @@ export function LoginPage() {
           }}
         />
 
-        <button type="submit">Entrar</button>
+        <Button type="submit">Entrar</Button>
 
         {error && (
           <p
