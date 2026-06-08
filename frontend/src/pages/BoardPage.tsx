@@ -3,11 +3,13 @@ import { Link, useParams } from 'react-router-dom';
 import { Column as ColumnComponent } from '../components/Column';
 import { columnsApi, type Column } from '../api/columns.api';
 import { boardsApi } from '../api/boards.api';
-import { Button } from '../components/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { NotFoundPage } from './NotFoundPage';
 
 export function BoardPage() {
   const { boardId } = useParams();
-
+  const [boardNotFound, setBoardNotFound] = useState(false);
   const [columns, setColumns] = useState<Column[]>([]);
   const [boardTitle, setBoardTitle] = useState('');
   const [title, setTitle] = useState('');
@@ -37,15 +39,16 @@ export function BoardPage() {
   }
 
   async function loadBoardTitle() {
-    if (!boardId) return;
-
     const boards = await boardsApi.list();
 
     const board = boards.find((board) => board.id === boardId);
 
-    if (board) {
-      setBoardTitle(board.title);
+    if (!board) {
+      setBoardNotFound(true);
+      return;
     }
+
+    setBoardTitle(board.title);
   }
 
   useEffect(() => {
@@ -53,48 +56,43 @@ export function BoardPage() {
     loadBoardTitle();
   }, [boardId]);
 
+  if (boardNotFound) {
+    return <NotFoundPage />;
+  }
+
   return (
     <div>
-      <div
-        style={{
-          marginBottom: '1rem',
-        }}
-      >
+      <div className="mb-4">
         <Link
           to="/"
-          style={{
-            textDecoration: 'none',
-          }}
+          className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Voltar para Boards
         </Link>
       </div>
 
-      <h1>{boardTitle || 'Carregando board...'}</h1>
+      <h1 className="mb-6 text-3xl font-bold">
+        {boardTitle || 'Carregando board...'}
+      </h1>
 
-      <input
-        placeholder="Nova coluna"
-        value={title}
-        onChange={(e) => setTitle(e.target.value)}
-      />
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row">
+        <Input
+          placeholder="Nova coluna"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="sm:max-w-md"
+        />
 
-      <Button onClick={handleCreateColumn}>Criar coluna</Button>
+        <Button onClick={handleCreateColumn}>Criar coluna</Button>
+      </div>
 
-      <hr />
-
-      <div
-        style={{
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'flex-start',
-        }}
-      >
+      <div className="flex items-start gap-4 overflow-x-auto pb-4">
         {columns.map((column) => (
-          <div key={column.id}>
+          <div key={column.id} className="flex shrink-0 flex-col gap-2">
             <ColumnComponent id={column.id} title={column.title} />
 
             <Button
-              variant="danger"
+              variant="destructive"
               onClick={() => handleDeleteColumn(column.id)}
             >
               Excluir coluna

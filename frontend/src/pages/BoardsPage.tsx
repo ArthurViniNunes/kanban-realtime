@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { boardsApi, type Board } from '../api/boards.api';
-import { Button } from '../components/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
 
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
@@ -17,6 +20,7 @@ export function BoardsPage() {
     if (!title.trim()) return;
 
     await boardsApi.create(title);
+    toast.success('Board criado');
 
     setTitle('');
 
@@ -27,6 +31,7 @@ export function BoardsPage() {
     await boardsApi.delete(boardId);
 
     await loadBoards();
+    toast.success('Board removido');
   }
 
   useEffect(() => {
@@ -35,70 +40,39 @@ export function BoardsPage() {
 
   return (
     <div>
-      <h1>Meus Boards</h1>
+      <h1 className="mb-6 text-3xl font-bold">Meus Boards</h1>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '2rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <input
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row">
+        <Input
           value={title}
           placeholder="Nome do board"
           onChange={(e) => setTitle(e.target.value)}
-          style={{
-            padding: '0.75rem',
-            flex: 1,
-            minWidth: '220px',
-          }}
+          className="sm:max-w-md"
         />
 
         <Button onClick={handleCreateBoard}>Criar Board</Button>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
         {boards.map((board) => (
-          <div
-            key={board.id}
-            style={{
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              padding: '1rem',
-              flex: '1 1 250px',
-              maxWidth: '350px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-            }}
-          >
-            <Link
-              to={`/boards/${board.id}`}
-              style={{
-                textDecoration: 'none',
-                fontWeight: 'bold',
-                fontSize: '1.1rem',
-                overflowWrap: 'break-word',
-              }}
-            >
-              {board.title}
-            </Link>
+          <Card key={board.id}>
+            <CardHeader>
+              <CardTitle className="break-words">{board.title}</CardTitle>
+            </CardHeader>
 
-            <Button
-              variant="danger"
-              onClick={() => handleDeleteBoard(board.id)}
-            >
-              Excluir
-            </Button>
-          </div>
+            <CardContent className="flex flex-col gap-2">
+              <Link to={`/boards/${board.id}`}>
+                <Button className="w-full">Abrir</Button>
+              </Link>
+
+              <Button
+                variant="destructive"
+                onClick={() => handleDeleteBoard(board.id)}
+              >
+                Excluir
+              </Button>
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>

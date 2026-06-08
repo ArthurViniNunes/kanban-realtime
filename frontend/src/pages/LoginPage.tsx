@@ -2,7 +2,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../context/AuthContext';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/getErrorMessage';
 
 export function LoginPage() {
   const navigate = useNavigate();
@@ -12,109 +17,67 @@ export function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
 
-  const [error, setError] = useState('');
-
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
     try {
-      setError('');
-
       await login(email, password);
 
       navigate('/');
-    } catch {
-      setError('Credenciais inválidas');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f8fafc',
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          backgroundColor: 'white',
-          padding: '2rem',
-          borderRadius: '12px',
-          width: '100%',
-          maxWidth: '400px',
-          margin: '1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-        }}
-      >
-        <h1
-          style={{
-            textAlign: 'center',
-            margin: 0,
-          }}
-        >
-          Kanban Realtime
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-100">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Login</CardTitle>
+        </CardHeader>
 
-        <p
-          style={{
-            textAlign: 'center',
-            margin: 0,
-          }}
-        >
-          Realize login para acessar seus boards e começar a organizar suas
-          tarefas!
-        </p>
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
 
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            padding: '0.75rem',
-          }}
-        />
+              <Input
+                id="email"
+                type="email"
+                placeholder="Digite seu email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-        <input
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            padding: '0.75rem',
-          }}
-        />
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
 
-        <Button type="submit">Entrar</Button>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-        {error && (
-          <p
-            style={{
-              color: 'red',
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        )}
+            <Button type="submit" className="w-full">
+              Entrar
+            </Button>
 
-        <div
-          style={{
-            textAlign: 'center',
-          }}
-        >
-          <span>Não possui conta? </span>
-
-          <Link to="/register">Criar conta</Link>
-        </div>
-      </form>
+            <p className="text-center text-sm text-muted-foreground">
+              Não possui conta?{' '}
+              <Link
+                to="/register"
+                className="font-medium text-primary hover:underline"
+              >
+                Criar conta
+              </Link>
+            </p>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }

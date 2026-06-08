@@ -1,6 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Button } from './Button';
+import { Button } from '@/components/ui/button';
 import { cardsApi, type Card } from '../api/cards.api';
+import { Input } from '@/components/ui/input';
+import {
+  Card as CardComponent,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 interface ColumnProps {
   id: string;
@@ -38,82 +45,43 @@ export function Column({ id, title }: ColumnProps) {
   }, [id]);
 
   return (
-    <div
-      style={{
-        background: '#f5f5f5',
-        borderRadius: '8px',
-        padding: '1rem',
-        width: '100%',
-        maxWidth: '320px',
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-      }}
-    >
-      <h3
-        style={{
-          margin: 0,
-          overflowWrap: 'break-word',
-        }}
-      >
-        {title}
-      </h3>
+    <CardComponent className="w-80 shrink-0">
+      <CardHeader>
+        <CardTitle className="break-words">{title}</CardTitle>
+      </CardHeader>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-        }}
-      >
-        <input
-          placeholder="Novo card"
-          value={newCardTitle}
-          onChange={(e) => setNewCardTitle(e.target.value)}
-          style={{
-            flex: 1,
-          }}
-        />
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Novo card"
+            value={newCardTitle}
+            onChange={(e) => setNewCardTitle(e.target.value)}
+          />
 
-        <Button onClick={handleCreateCard}>+</Button>
-      </div>
+          <Button size="icon" onClick={handleCreateCard}>
+            +
+          </Button>
+        </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem',
-        }}
-      >
-        {cards.map((card) => (
-          <div
-            key={card.id}
-            style={{
-              background: 'white',
-              border: '1px solid #ddd',
-              borderRadius: '6px',
-              padding: '0.75rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <span
-              style={{
-                overflowWrap: 'break-word',
-                flex: 1,
-              }}
+        <div className="space-y-2">
+          {cards.map((card) => (
+            <div
+              key={card.id}
+              className="flex items-center gap-2 rounded-lg border bg-background p-3"
             >
-              {card.title}
-            </span>
+              <span className="flex-1 break-words">{card.title}</span>
 
-            <Button variant="danger" onClick={() => handleDeleteCard(card.id)}>
-              ×
-            </Button>
-          </div>
-        ))}
-      </div>
-    </div>
+              <Button
+                size="icon"
+                variant="destructive"
+                onClick={() => handleDeleteCard(card.id)}
+              >
+                ×
+              </Button>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </CardComponent>
   );
 }

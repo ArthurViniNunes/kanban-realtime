@@ -1,7 +1,9 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+
 import { useAuth } from '../context/AuthContext';
-import { Button } from './Button';
+
+import { Button } from './ui/button';
 
 interface LayoutProps {
   children: ReactNode;
@@ -19,82 +21,29 @@ export function Layout({ children }: LayoutProps) {
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        backgroundColor: '#f8fafc',
-      }}
-    >
-      <header
-        style={{
-          backgroundColor: 'white',
-          borderBottom: '1px solid #e5e7eb',
-        }}
-      >
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '1rem 2rem',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-            gap: '1rem',
-          }}
-        >
-          <Link
-            to="/"
-            style={{
-              textDecoration: 'none',
-              color: 'inherit',
-            }}
-          >
-            <h2
-              style={{
-                margin: 0,
-              }}
-            >
-              Kanban Realtime
-            </h2>
+    <div className="min-h-screen bg-slate-50">
+      <header className="border-b bg-white">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-4 py-4">
+          <Link to="/" className="text-xl font-bold tracking-tight">
+            Kanban Realtime
           </Link>
 
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              flexWrap: 'wrap',
-            }}
-          >
+          <div className="flex items-center gap-3">
             <span
-              style={{
-                fontWeight: 600,
-                maxWidth: '200px',
-                overflow: 'hidden',
-                textOverflow: 'ellipsis',
-                whiteSpace: 'nowrap',
-              }}
+              className="max-w-[200px] truncate text-sm font-medium text-muted-foreground"
+              title={user?.name}
             >
               {user?.name}
             </span>
 
-            <Button variant="secondary" onClick={handleLogout}>
+            <Button variant="outline" onClick={handleLogout}>
               Logout
             </Button>
           </div>
         </div>
       </header>
 
-      <main
-        style={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '1rem',
-        }}
-      >
-        {children}
-      </main>
+      <main className="mx-auto max-w-7xl p-4 md:p-6">{children}</main>
     </div>
   );
 }

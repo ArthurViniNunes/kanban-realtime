@@ -4,9 +4,11 @@ import './index.css';
 
 import { AuthProvider } from './context/AuthContext';
 import { AppRouter } from './routes/AppRouter';
+import { Toaster } from '@/components/ui/sonner';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <AuthProvider>
     <AppRouter />
+    <Toaster />
   </AuthProvider>,
 );

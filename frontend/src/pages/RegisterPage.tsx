@@ -2,6 +2,19 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import { authService } from '../services/auth.service';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/getErrorMessage';
+
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 
 export function RegisterPage() {
   const navigate = useNavigate();
@@ -9,120 +22,91 @@ export function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
     try {
-      setError('');
-
       await authService.register(name, email, password);
 
-      alert('Usuário criado com sucesso!');
+      toast.success('Conta criada com sucesso! Faça login para continuar.');
+
+      setTimeout(() => {
+        navigate('/login');
+      }, 1500);
 
       navigate('/login');
-    } catch {
-      setError('Erro ao criar usuário');
+    } catch (error) {
+      const message = getErrorMessage(error);
+      toast.error(message);
+      return;
     }
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: '#f8fafc',
-      }}
-    >
-      <form
-        onSubmit={handleSubmit}
-        style={{
-          backgroundColor: 'white',
-          padding: '2rem',
-          borderRadius: '12px',
-          width: '100%',
-          maxWidth: '400px',
-          margin: '1rem',
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '1rem',
-          boxShadow: '0 2px 10px rgba(0,0,0,0.08)',
-        }}
-      >
-        <h1
-          style={{
-            textAlign: 'center',
-            margin: 0,
-          }}
-        >
-          Kanban Realtime
-        </h1>
+    <div className="flex min-h-screen items-center justify-center bg-slate-100">
+      <Card className="w-full max-w-md">
+        <CardHeader>
+          <CardTitle>Criar conta</CardTitle>
 
-        <p
-          style={{
-            textAlign: 'center',
-            margin: 0,
-          }}
-        >
-          Crie sua conta para acessar seus boards e começar a organizar suas
-          tarefas!
-        </p>
+          <CardDescription>
+            Crie sua conta para acessar seus boards e organizar suas tarefas.
+          </CardDescription>
+        </CardHeader>
 
-        <input
-          placeholder="Nome"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          style={{
-            padding: '0.75rem',
-          }}
-        />
+        <CardContent>
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome</Label>
 
-        <input
-          placeholder="Email"
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          style={{
-            padding: '0.75rem',
-          }}
-        />
+              <Input
+                id="name"
+                placeholder="Seu nome"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
 
-        <input
-          placeholder="Senha"
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          style={{
-            padding: '0.75rem',
-          }}
-        />
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
 
-        <button type="submit">Criar conta</button>
+              <Input
+                id="email"
+                type="email"
+                placeholder="Digite seu email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+              />
+            </div>
 
-        {error && (
-          <p
-            style={{
-              color: 'red',
-              margin: 0,
-            }}
-          >
-            {error}
-          </p>
-        )}
+            <div className="space-y-2">
+              <Label htmlFor="password">Senha</Label>
 
-        <div
-          style={{
-            textAlign: 'center',
-          }}
-        >
-          <span>Já possui conta? </span>
+              <Input
+                id="password"
+                type="password"
+                placeholder="Digite sua senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
 
-          <Link to="/login">Entrar</Link>
-        </div>
-      </form>
+            <Button type="submit" className="w-full">
+              Criar conta
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Já possui conta?{' '}
+              <Link
+                to="/login"
+                className="font-medium text-primary hover:underline"
+              >
+                Entrar
+              </Link>
+            </p>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
