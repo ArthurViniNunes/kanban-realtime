@@ -9,6 +9,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { getErrorMessage } from '@/utils/getErrorMessage';
 
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
@@ -22,27 +23,39 @@ export function BoardsPage() {
       const data = await boardsApi.list();
 
       setBoards(data);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   }
 
   async function handleCreateBoard() {
-    if (!title.trim()) return;
+    try {
+      if (!title.trim()) return;
 
-    await boardsApi.create(title);
-    toast.success('Board criado');
+      await boardsApi.create(title);
 
-    setTitle('');
+      toast.success('Board criado');
 
-    await loadBoards();
+      setTitle('');
+
+      await loadBoards();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   async function handleDeleteBoard(boardId: string) {
-    await boardsApi.delete(boardId);
+    try {
+      await boardsApi.delete(boardId);
 
-    await loadBoards();
-    toast.success('Board removido');
+      toast.success('Board excluído');
+
+      await loadBoards();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   useEffect(() => {

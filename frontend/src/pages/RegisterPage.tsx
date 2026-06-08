@@ -22,6 +22,7 @@ export function RegisterPage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -31,15 +32,11 @@ export function RegisterPage() {
 
       toast.success('Conta criada com sucesso! Faça login para continuar.');
 
-      setTimeout(() => {
-        navigate('/login');
-      }, 1500);
-
       navigate('/login');
     } catch (error) {
-      const message = getErrorMessage(error);
-      toast.error(message);
-      return;
+      toast.error(getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -91,8 +88,8 @@ export function RegisterPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Criar conta
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Criando conta...' : 'Criar conta'}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">

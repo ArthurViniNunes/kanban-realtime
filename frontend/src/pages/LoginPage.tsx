@@ -16,16 +16,23 @@ export function LoginPage() {
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.SubmitEvent<HTMLFormElement>) {
     e.preventDefault();
 
     try {
+      setIsSubmitting(true);
+
       await login(email, password);
+
+      toast.success('Login realizado com sucesso');
 
       navigate('/');
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -62,8 +69,8 @@ export function LoginPage() {
               />
             </div>
 
-            <Button type="submit" className="w-full">
-              Entrar
+            <Button type="submit" className="w-full" disabled={isSubmitting}>
+              {isSubmitting ? 'Entrando...' : 'Entrar'}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">

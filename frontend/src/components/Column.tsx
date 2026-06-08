@@ -11,6 +11,8 @@ import {
 import { EmptyState } from './EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { getErrorMessage } from '@/utils/getErrorMessage';
+import { toast } from 'sonner';
 
 interface ColumnProps {
   id: string;
@@ -29,25 +31,39 @@ export function Column({ id, title }: ColumnProps) {
       const data = await cardsApi.list(id);
 
       setCards(data);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     } finally {
       setLoading(false);
     }
   }
 
   async function handleCreateCard() {
-    if (!newCardTitle.trim()) return;
+    try {
+      if (!newCardTitle.trim()) return;
 
-    await cardsApi.create(id, newCardTitle, cards.length);
+      await cardsApi.create(id, newCardTitle, cards.length);
 
-    setNewCardTitle('');
+      setNewCardTitle('');
 
-    await loadCards();
+      await loadCards();
+
+      toast.success('Card criado');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   async function handleDeleteCard(cardId: string) {
-    await cardsApi.delete(cardId);
+    try {
+      await cardsApi.delete(cardId);
 
-    await loadCards();
+      await loadCards();
+
+      toast.success('Card removido');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   useEffect(() => {

@@ -10,6 +10,8 @@ import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { toast } from 'sonner';
+import { getErrorMessage } from '@/utils/getErrorMessage';
 
 export function BoardPage() {
   const { boardId } = useParams();
@@ -20,27 +22,43 @@ export function BoardPage() {
   const [loading, setLoading] = useState(true);
 
   async function loadColumns() {
-    if (!boardId) return;
+    try {
+      if (!boardId) return;
 
-    const data = await columnsApi.list(boardId);
+      const data = await columnsApi.list(boardId);
 
-    setColumns(data);
+      setColumns(data);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   async function handleCreateColumn() {
-    if (!boardId || !title.trim()) return;
+    try {
+      if (!boardId || !title.trim()) return;
 
-    await columnsApi.create(boardId, title, columns.length);
+      await columnsApi.create(boardId, title, columns.length);
 
-    setTitle('');
+      setTitle('');
 
-    await loadColumns();
+      await loadColumns();
+
+      toast.success('Coluna criada');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   async function handleDeleteColumn(columnId: string) {
-    await columnsApi.delete(columnId);
+    try {
+      await columnsApi.delete(columnId);
 
-    await loadColumns();
+      await loadColumns();
+
+      toast.success('Coluna removida');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   async function loadBoardTitle() {
