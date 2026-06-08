@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
+import { PageHeader } from '@/components/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
 
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
@@ -40,7 +42,10 @@ export function BoardsPage() {
 
   return (
     <div>
-      <h1 className="mb-6 text-3xl font-bold">Meus Boards</h1>
+      <PageHeader
+        title="Meus Boards"
+        description="Gerencie seus boards e organize seu trabalho."
+      />
 
       <div className="mb-8 flex flex-col gap-3 sm:flex-row">
         <Input
@@ -53,28 +58,35 @@ export function BoardsPage() {
         <Button onClick={handleCreateBoard}>Criar Board</Button>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        {boards.map((board) => (
-          <Card key={board.id}>
-            <CardHeader>
-              <CardTitle className="break-words">{board.title}</CardTitle>
-            </CardHeader>
+      {boards.length === 0 ? (
+        <EmptyState
+          title="Nenhum board encontrado"
+          description="Crie seu primeiro board para começar."
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {boards.map((board) => (
+            <Card key={board.id}>
+              <CardHeader>
+                <CardTitle className="break-words">{board.title}</CardTitle>
+              </CardHeader>
 
-            <CardContent className="flex flex-col gap-2">
-              <Link to={`/boards/${board.id}`}>
-                <Button className="w-full">Abrir</Button>
-              </Link>
+              <CardContent className="flex flex-col gap-2">
+                <Link to={`/boards/${board.id}`}>
+                  <Button className="w-full">Abrir</Button>
+                </Link>
 
-              <Button
-                variant="destructive"
-                onClick={() => handleDeleteBoard(board.id)}
-              >
-                Excluir
-              </Button>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteBoard(board.id)}
+                >
+                  Excluir
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

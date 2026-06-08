@@ -6,6 +6,8 @@ import { boardsApi } from '../api/boards.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NotFoundPage } from './NotFoundPage';
+import { PageHeader } from '@/components/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
 
 export function BoardPage() {
   const { boardId } = useParams();
@@ -71,9 +73,10 @@ export function BoardPage() {
         </Link>
       </div>
 
-      <h1 className="mb-6 text-3xl font-bold">
-        {boardTitle || 'Carregando board...'}
-      </h1>
+      <PageHeader
+        title={boardTitle || 'Carregando board...'}
+        description="Gerencie colunas e cards deste board."
+      />
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <Input
@@ -87,18 +90,27 @@ export function BoardPage() {
       </div>
 
       <div className="flex items-start gap-4 overflow-x-auto pb-4">
-        {columns.map((column) => (
-          <div key={column.id} className="flex shrink-0 flex-col gap-2">
-            <ColumnComponent id={column.id} title={column.title} />
+        {columns.length === 0 ? (
+          <EmptyState
+            title="Nenhuma coluna criada"
+            description="Crie sua primeira coluna para começar."
+          />
+        ) : (
+          <div className="flex gap-4 overflow-x-auto pb-2">
+            {columns.map((column) => (
+              <div key={column.id} className="flex shrink-0 flex-col gap-2">
+                <ColumnComponent id={column.id} title={column.title} />
 
-            <Button
-              variant="destructive"
-              onClick={() => handleDeleteColumn(column.id)}
-            >
-              Excluir coluna
-            </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => handleDeleteColumn(column.id)}
+                >
+                  Excluir coluna
+                </Button>
+              </div>
+            ))}
           </div>
-        ))}
+        )}
       </div>
     </div>
   );

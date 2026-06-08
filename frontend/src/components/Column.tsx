@@ -8,6 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { EmptyState } from './EmptyState';
 
 interface ColumnProps {
   id: string;
@@ -64,22 +65,31 @@ export function Column({ id, title }: ColumnProps) {
         </div>
 
         <div className="space-y-2">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className="flex items-center gap-2 rounded-lg border bg-background p-3"
-            >
-              <span className="flex-1 break-words">{card.title}</span>
+          <div className="flex flex-col gap-2">
+            {cards.length === 0 ? (
+              <EmptyState
+                title="Nenhum card"
+                description="Crie um card para começar."
+              />
+            ) : (
+              cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex items-center gap-2 rounded-lg border bg-background p-3"
+                >
+                  <span className="flex-1 break-words">{card.title}</span>
 
-              <Button
-                size="icon"
-                variant="destructive"
-                onClick={() => handleDeleteCard(card.id)}
-              >
-                ×
-              </Button>
-            </div>
-          ))}
+                  <Button
+                    size="icon"
+                    variant="destructive"
+                    onClick={() => handleDeleteCard(card.id)}
+                  >
+                    ×
+                  </Button>
+                </div>
+              ))
+            )}
+          </div>
         </div>
       </CardContent>
     </CardComponent>
