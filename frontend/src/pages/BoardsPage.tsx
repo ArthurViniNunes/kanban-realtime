@@ -7,15 +7,23 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState(true);
 
   async function loadBoards() {
-    const data = await boardsApi.list();
+    try {
+      setLoading(true);
 
-    setBoards(data);
+      const data = await boardsApi.list();
+
+      setBoards(data);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCreateBoard() {
@@ -58,7 +66,22 @@ export function BoardsPage() {
         <Button onClick={handleCreateBoard}>Criar Board</Button>
       </div>
 
-      {boards.length === 0 ? (
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
+
+              <CardContent className="flex flex-col gap-2">
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : boards.length === 0 ? (
         <EmptyState
           title="Nenhum board encontrado"
           description="Crie seu primeiro board para começar."

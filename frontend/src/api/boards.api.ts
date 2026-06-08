@@ -25,4 +25,9 @@ export const boardsApi = {
   async delete(boardId: string) {
     await api.delete(`/boards/${boardId}`);
   },
+
+  async getById(boardId: string): Promise<Board> {
+    const response = await api.get(`/boards/${boardId}`);
+    return response.data;
+  },
 };

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { NotFoundPage } from './NotFoundPage';
 import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 export function BoardPage() {
   const { boardId } = useParams();
@@ -15,6 +16,7 @@ export function BoardPage() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [boardTitle, setBoardTitle] = useState('');
   const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState(true);
 
   async function loadColumns() {
     if (!boardId) return;
@@ -41,16 +43,19 @@ export function BoardPage() {
   }
 
   async function loadBoardTitle() {
-    const boards = await boardsApi.list();
+    try {
+      const boards = await boardsApi.list();
 
-    const board = boards.find((board) => board.id === boardId);
+      const board = boards.find((board) => board.id === boardId);
 
-    if (!board) {
-      setBoardNotFound(true);
-      return;
+      if (!board) {
+        setBoardNotFound(true);
+        return;
+      }
+      setBoardTitle(board.title);
+    } finally {
+      setLoading(false);
     }
-
-    setBoardTitle(board.title);
   }
 
   useEffect(() => {
@@ -73,10 +78,17 @@ export function BoardPage() {
         </Link>
       </div>
 
-      <PageHeader
-        title={boardTitle || 'Carregando board...'}
-        description="Gerencie colunas e cards deste board."
-      />
+      {loading ? (
+        <div className="mb-6 space-y-2">
+          <Skeleton className="h-8 w-64" />
+          <Skeleton className="h-4 w-80" />
+        </div>
+      ) : (
+        <PageHeader
+          title={boardTitle}
+          description="Gerencie colunas e cards deste board."
+        />
+      )}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">
         <Input

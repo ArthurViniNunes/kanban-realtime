@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { cardsApi, type Card } from '../api/cards.api';
+import { cardsApi, type Card } from '@/api/cards.api';
 import { Input } from '@/components/ui/input';
 import {
   Card as CardComponent,
@@ -9,6 +9,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { EmptyState } from './EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ColumnProps {
   id: string;
@@ -18,11 +19,18 @@ interface ColumnProps {
 export function Column({ id, title }: ColumnProps) {
   const [cards, setCards] = useState<Card[]>([]);
   const [newCardTitle, setNewCardTitle] = useState('');
+  const [loading, setLoading] = useState(true);
 
   async function loadCards() {
-    const data = await cardsApi.list(id);
+    try {
+      setLoading(true);
 
-    setCards(data);
+      const data = await cardsApi.list(id);
+
+      setCards(data);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCreateCard() {
@@ -66,7 +74,16 @@ export function Column({ id, title }: ColumnProps) {
 
         <div className="space-y-2">
           <div className="flex flex-col gap-2">
-            {cards.length === 0 ? (
+            {loading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border bg-background p-3"
+                >
+                  <Skeleton className="h-5 w-full" />
+                </div>
+              ))
+            ) : cards.length === 0 ? (
               <EmptyState
                 title="Nenhum card"
                 description="Crie um card para começar."
