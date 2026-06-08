@@ -9,6 +9,7 @@ import { NotFoundPage } from './NotFoundPage';
 import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export function BoardPage() {
   const { boardId } = useParams();
@@ -113,12 +114,13 @@ export function BoardPage() {
               <div key={column.id} className="flex shrink-0 flex-col gap-2">
                 <ColumnComponent id={column.id} title={column.title} />
 
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteColumn(column.id)}
+                <ConfirmDialog
+                  title="Excluir coluna"
+                  description="Todos os cards desta coluna serão removidos permanentemente."
+                  onConfirm={() => handleDeleteColumn(column.id)}
                 >
-                  Excluir coluna
-                </Button>
+                  <Button variant="destructive">Excluir coluna</Button>
+                </ConfirmDialog>
               </div>
             ))}
           </div>

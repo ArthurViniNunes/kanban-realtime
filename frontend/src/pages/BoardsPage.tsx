@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { PageHeader } from '@/components/PageHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
@@ -99,12 +100,13 @@ export function BoardsPage() {
                   <Button className="w-full">Abrir</Button>
                 </Link>
 
-                <Button
-                  variant="destructive"
-                  onClick={() => handleDeleteBoard(board.id)}
+                <ConfirmDialog
+                  title="Excluir board"
+                  description="Essa ação não pode ser desfeita. Todos os dados deste board serão perdidos. Deseja realmente excluí-lo?"
+                  onConfirm={() => handleDeleteBoard(board.id)}
                 >
-                  Excluir
-                </Button>
+                  <Button variant="destructive">Excluir</Button>
+                </ConfirmDialog>
               </CardContent>
             </Card>
           ))}

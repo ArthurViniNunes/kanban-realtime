@@ -10,6 +10,7 @@ import {
 } from '@/components/ui/card';
 import { EmptyState } from './EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
 
 interface ColumnProps {
   id: string;
@@ -96,13 +97,15 @@ export function Column({ id, title }: ColumnProps) {
                 >
                   <span className="flex-1 break-words">{card.title}</span>
 
-                  <Button
-                    size="icon"
-                    variant="destructive"
-                    onClick={() => handleDeleteCard(card.id)}
+                  <ConfirmDialog
+                    title="Excluir card"
+                    description="Esta ação não pode ser desfeita."
+                    onConfirm={() => handleDeleteCard(card.id)}
                   >
-                    ×
-                  </Button>
+                    <Button size="icon" variant="destructive">
+                      ×
+                    </Button>
+                  </ConfirmDialog>
                 </div>
               ))
             )}
