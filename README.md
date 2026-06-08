@@ -1,105 +1,148 @@
 # Kanban Realtime
 
-![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white)
-![Node.js](https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white)
-![Express](https://img.shields.io/badge/Express-black?style=for-the-badge&logo=express)
-![Prisma](https://img.shields.io/badge/Prisma-2D3748?style=for-the-badge&logo=prisma)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-316192?style=for-the-badge&logo=postgresql)
+Aplicação Full Stack inspirada em plataformas de gerenciamento de tarefas como Jira, Trello e Linear.
 
-Sistema de gerenciamento de tarefas em estilo Kanban com atualização em tempo real.
-
-Stack: React · TypeScript · Node.js · Express · Prisma · PostgreSQL · Supabase · WebSockets (em desenvolvimento)
+O projeto foi desenvolvido para demonstrar competências em arquitetura Full Stack, autenticação, modelagem relacional, integração frontend/backend, experiência do usuário e evolução incremental de software.
 
 ---
 
-## 🚀 Visão Geral
+## Principais Funcionalidades
 
-Este projeto implementa um sistema Kanban completo com foco em:
+### Autenticação
 
-- Autenticação JWT
-- Persistência em PostgreSQL (Supabase)
-- Estrutura de domínio escalável (Boards, Columns, Cards)
-- Backend modularizado com Service Layer
-- Preparação para sincronização em tempo real via WebSockets
+- Cadastro de usuários
+- Login com JWT
+- Rotas protegidas
+- Persistência de sessão
+
+### Gerenciamento de Boards
+
+- Criação de boards
+- Listagem de boards
+- Exclusão de boards
+
+### Gerenciamento de Colunas
+
+- Criação de colunas
+- Organização por posição
+- Exclusão de colunas
+
+### Gerenciamento de Cards
+
+- Criação de cards
+- Organização por coluna
+- Exclusão de cards
+
+### Interface
+
+- Responsiva
+- Componentizada
+- Design System baseado em shadcn/ui
+- Feedback visual através de Toasts
 
 ---
 
-## 🧱 Arquitetura
-
-Frontend -> API (Express) -> Service Layer -> Prisma -> PostgreSQL
-
-Fluxo:
-
-```txt
-React UI
-   v
-REST API (Express)
-   v
-Services (business logic)
-   v
-Prisma ORM
-   v
-Supabase DB
-```
+## Tecnologias Utilizadas
 
 ### Backend
 
-- Express + TypeScript
+- Node.js
+- TypeScript
+- Express
 - Prisma ORM
-- PostgreSQL (Supabase)
-- JWT Authentication
-- Layered Architecture (Controller -> Service -> Repository)
+- PostgreSQL
+- JWT
+- Swagger/OpenAPI
 
 ### Frontend
 
-- React + Vite
+- React
 - TypeScript
-- Estrutura preparada para drag-and-drop e real-time sync
+- React Router
+- Axios
+- Tailwind CSS v4
+- shadcn/ui
+- Radix UI
 
 ---
 
-## 📐 Modelo de Domínio
+## Conceitos Aplicados
 
-```txt
-User
-    └── Board
-        └── Column
-            └── Card
+### Arquitetura em Camadas
+
+```text
+Controller
+↓
+Service
+↓
+Repository
+↓
+Database
 ```
 
----
+### Boas Práticas
 
-## 🔐 Autenticação
-
-- JWT Access Token
-- Middleware de proteção de rotas
-- Endpoint `/auth/me`
-
----
-
-## ⚙️ Status do Projeto
-
-- [x] Setup monorepo
-- [x] Backend base
-- [x] Auth (register/login)
-- [x] Prisma + Supabase
-- [x] Boards module
-- [ ] Columns dinâmicas
-- [ ] Cards CRUD
-- [ ] WebSocket real-time sync
-- [ ] Drag-and-drop UI
+- Separação de responsabilidades
+- Componentização
+- Context API
+- Service Layer
+- API Layer
+- Rotas protegidas
+- Tipagem completa com TypeScript
 
 ---
 
-## 📦 Como rodar
+## Desafios Técnicos Resolvidos
+
+- Integração completa entre frontend e backend
+- Controle de autenticação JWT
+- Proteção de rotas
+- Gerenciamento de estado autenticado
+- Estrutura escalável para evolução futura
+- Migração gradual para Tailwind CSS e shadcn/ui
+
+---
+
+## Próximas Evoluções
+
+- Drag and Drop com @dnd-kit
+- Reordenação de cards e colunas
+- Busca de boards
+- WebSockets para colaboração em tempo real
+- Endpoint otimizado GET /boards/:id
+- Skeleton Loading States
+
+---
+
+## Como Executar
 
 ### Backend
 
 ```bash
 cd backend
 npm install
+```
+
+Configure o arquivo `.env` de acordo com `.env.example`:
+
+```env
+DATABASE_URL=
+JWT_SECRET=
+```
+
+Execute as migrations:
+
+```bash
+npx prisma migrate dev
+```
+
+Inicie a API:
+
+```bash
 npm run dev
 ```
+
+---
 
 ### Frontend
 
@@ -111,11 +154,28 @@ npm run dev
 
 ---
 
-## 🧪 Variáveis de ambiente
+### Acesso
 
-```txt
-DATABASE_URL=
-DIRECT_URL=
-JWT_SECRET=
-JWT_EXPIRES_IN=7d
+Frontend:
+
+```text
+http://localhost:5173
 ```
+
+Backend:
+
+```text
+http://localhost:3000
+```
+
+Swagger:
+
+```text
+http://localhost:3000/api-docs
+```
+
+---
+
+## Objetivo do Projeto
+
+Este projeto foi desenvolvido como estudo avançado de desenvolvimento Full Stack, simulando problemas reais encontrados em aplicações SaaS modernas e aplicando práticas utilizadas em ambientes profissionais.

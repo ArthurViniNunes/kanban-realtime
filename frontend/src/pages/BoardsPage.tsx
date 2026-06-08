@@ -1,32 +1,61 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { boardsApi, type Board } from '../api/boards.api';
-import { Button } from '../components/Button';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { toast } from 'sonner';
+import { PageHeader } from '@/components/PageHeader';
+import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { getErrorMessage } from '@/utils/getErrorMessage';
 
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [title, setTitle] = useState('');
+  const [loading, setLoading] = useState(true);
 
   async function loadBoards() {
-    const data = await boardsApi.list();
+    try {
+      setLoading(true);
 
-    setBoards(data);
+      const data = await boardsApi.list();
+
+      setBoards(data);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCreateBoard() {
-    if (!title.trim()) return;
+    try {
+      if (!title.trim()) return;
 
-    await boardsApi.create(title);
+      await boardsApi.create(title);
 
-    setTitle('');
+      toast.success('Board criado');
 
-    await loadBoards();
+      setTitle('');
+
+      await loadBoards();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   async function handleDeleteBoard(boardId: string) {
-    await boardsApi.delete(boardId);
+    try {
+      await boardsApi.delete(boardId);
 
-    await loadBoards();
+      toast.success('Board excluído');
+
+      await loadBoards();
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   useEffect(() => {
@@ -35,72 +64,67 @@ export function BoardsPage() {
 
   return (
     <div>
-      <h1>Meus Boards</h1>
+      <PageHeader
+        title="Meus Boards"
+        description="Gerencie seus boards e organize seu trabalho."
+      />
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-          marginBottom: '2rem',
-          flexWrap: 'wrap',
-        }}
-      >
-        <input
+      <div className="mb-8 flex flex-col gap-3 sm:flex-row">
+        <Input
           value={title}
           placeholder="Nome do board"
           onChange={(e) => setTitle(e.target.value)}
-          style={{
-            padding: '0.75rem',
-            flex: 1,
-            minWidth: '220px',
-          }}
+          className="sm:max-w-md"
         />
 
         <Button onClick={handleCreateBoard}>Criar Board</Button>
       </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: '1rem',
-        }}
-      >
-        {boards.map((board) => (
-          <div
-            key={board.id}
-            style={{
-              border: '1px solid #ddd',
-              borderRadius: '8px',
-              padding: '1rem',
-              flex: '1 1 250px',
-              maxWidth: '350px',
-              display: 'flex',
-              flexDirection: 'column',
-              gap: '1rem',
-            }}
-          >
-            <Link
-              to={`/boards/${board.id}`}
-              style={{
-                textDecoration: 'none',
-                fontWeight: 'bold',
-                fontSize: '1.1rem',
-                overflowWrap: 'break-word',
-              }}
-            >
-              {board.title}
-            </Link>
+      {loading ? (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {Array.from({ length: 6 }).map((_, index) => (
+            <Card key={index}>
+              <CardHeader>
+                <Skeleton className="h-6 w-40" />
+              </CardHeader>
 
-            <Button
-              variant="danger"
-              onClick={() => handleDeleteBoard(board.id)}
-            >
-              Excluir
-            </Button>
-          </div>
-        ))}
-      </div>
+              <CardContent className="flex flex-col gap-2">
+                <Skeleton className="h-9 w-full" />
+                <Skeleton className="h-9 w-full" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      ) : boards.length === 0 ? (
+        <EmptyState
+          title="Nenhum board encontrado"
+          description="Crie seu primeiro board para começar."
+        />
+      ) : (
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {boards.map((board) => (
+            <Card key={board.id}>
+              <CardHeader>
+                <CardTitle className="break-words">{board.title}</CardTitle>
+              </CardHeader>
+
+              <CardContent className="flex flex-col gap-2">
+                <Link to={`/boards/${board.id}`}>
+                  <Button className="w-full">Abrir</Button>
+                </Link>
+
+                <ConfirmDialog
+                  title="Excluir board"
+                  description="Essa ação não pode ser desfeita. Todos os dados deste board serão perdidos. Deseja realmente excluí-lo?"
+                  onConfirm={() => handleDeleteBoard(board.id)}
+                >
+                  <Button variant="destructive">Excluir</Button>
+                </ConfirmDialog>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

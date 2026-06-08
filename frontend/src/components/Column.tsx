@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Button } from './Button';
-import { cardsApi, type Card } from '../api/cards.api';
+import { Button } from '@/components/ui/button';
+import { cardsApi, type Card } from '@/api/cards.api';
+import { Input } from '@/components/ui/input';
+import {
+  Card as CardComponent,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/ui/skeleton';
+import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { getErrorMessage } from '@/utils/getErrorMessage';
+import { toast } from 'sonner';
 
 interface ColumnProps {
   id: string;
@@ -10,27 +22,48 @@ interface ColumnProps {
 export function Column({ id, title }: ColumnProps) {
   const [cards, setCards] = useState<Card[]>([]);
   const [newCardTitle, setNewCardTitle] = useState('');
+  const [loading, setLoading] = useState(true);
 
   async function loadCards() {
-    const data = await cardsApi.list(id);
+    try {
+      setLoading(true);
 
-    setCards(data);
+      const data = await cardsApi.list(id);
+
+      setCards(data);
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function handleCreateCard() {
-    if (!newCardTitle.trim()) return;
+    try {
+      if (!newCardTitle.trim()) return;
 
-    await cardsApi.create(id, newCardTitle, cards.length);
+      await cardsApi.create(id, newCardTitle, cards.length);
 
-    setNewCardTitle('');
+      setNewCardTitle('');
 
-    await loadCards();
+      await loadCards();
+
+      toast.success('Card criado');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   async function handleDeleteCard(cardId: string) {
-    await cardsApi.delete(cardId);
+    try {
+      await cardsApi.delete(cardId);
 
-    await loadCards();
+      await loadCards();
+
+      toast.success('Card removido');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
   }
 
   useEffect(() => {
@@ -38,82 +71,63 @@ export function Column({ id, title }: ColumnProps) {
   }, [id]);
 
   return (
-    <div
-      style={{
-        background: '#f5f5f5',
-        borderRadius: '8px',
-        padding: '1rem',
-        width: '100%',
-        maxWidth: '320px',
-        flexShrink: 0,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '1rem',
-      }}
-    >
-      <h3
-        style={{
-          margin: 0,
-          overflowWrap: 'break-word',
-        }}
-      >
-        {title}
-      </h3>
+    <CardComponent className="w-80 shrink-0">
+      <CardHeader>
+        <CardTitle className="break-words">{title}</CardTitle>
+      </CardHeader>
 
-      <div
-        style={{
-          display: 'flex',
-          gap: '0.5rem',
-        }}
-      >
-        <input
-          placeholder="Novo card"
-          value={newCardTitle}
-          onChange={(e) => setNewCardTitle(e.target.value)}
-          style={{
-            flex: 1,
-          }}
-        />
+      <CardContent className="space-y-4">
+        <div className="flex gap-2">
+          <Input
+            placeholder="Novo card"
+            value={newCardTitle}
+            onChange={(e) => setNewCardTitle(e.target.value)}
+          />
 
-        <Button onClick={handleCreateCard}>+</Button>
-      </div>
+          <Button size="icon" onClick={handleCreateCard}>
+            +
+          </Button>
+        </div>
 
-      <div
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          gap: '0.5rem',
-        }}
-      >
-        {cards.map((card) => (
-          <div
-            key={card.id}
-            style={{
-              background: 'white',
-              border: '1px solid #ddd',
-              borderRadius: '6px',
-              padding: '0.75rem',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            <span
-              style={{
-                overflowWrap: 'break-word',
-                flex: 1,
-              }}
-            >
-              {card.title}
-            </span>
+        <div className="space-y-2">
+          <div className="flex flex-col gap-2">
+            {loading ? (
+              Array.from({ length: 3 }).map((_, index) => (
+                <div
+                  key={index}
+                  className="rounded-lg border bg-background p-3"
+                >
+                  <Skeleton className="h-5 w-full" />
+                </div>
+              ))
+            ) : cards.length === 0 ? (
+              <EmptyState
+                title="Nenhum card"
+                description="Crie um card para começar."
+              />
+            ) : (
+              cards.map((card) => (
+                <div
+                  key={card.id}
+                  className="flex items-center gap-2 rounded-lg border bg-background p-3"
+                >
+                  <span className="flex-1 break-words">{card.title}</span>
 
-            <Button variant="danger" onClick={() => handleDeleteCard(card.id)}>
-              ×
-            </Button>
+                  <ConfirmDialog
+                    title="Excluir card"
+                    description="Esta ação não pode ser desfeita."
+                    onConfirm={() => handleDeleteCard(card.id)}
+                  >
+                    <Button size="icon" variant="destructive">
+                      ×
+                    </Button>
+                  </ConfirmDialog>
+                </div>
+              ))
+            )}
           </div>
-        ))}
-      </div>
-    </div>
+        </div>
+      </CardContent>
+    </CardComponent>
   );
 }

@@ -2,222 +2,732 @@
 
 ## 1. Visão Geral
 
-O sistema é um Kanban realtime fullstack baseado em arquitetura client-server desacoplada.
+O Kanban Realtime é uma aplicação Full Stack desenvolvida para demonstrar conhecimentos em desenvolvimento moderno utilizando TypeScript, React, Node.js, PostgreSQL e arquitetura em camadas.
 
-Fluxo geral:
+O sistema foi projetado desde o início para permitir evolução gradual, começando por um MVP funcional e evoluindo posteriormente para recursos de colaboração em tempo real, drag-and-drop avançado, cache inteligente e escalabilidade horizontal.
 
-Frontend (React)
-↓ HTTP / WebSocket (futuro)
-Backend (Express API)
-↓
-Service Layer (business logic)
-↓
+Fluxo atual da aplicação:
+
+```txt
+Frontend (React + Vite)
+            │
+            ▼
+      HTTP REST API
+            │
+            ▼
+ Backend (Express)
+            │
+            ▼
+   Service Layer
+            │
+            ▼
+ Prisma ORM
+            │
+            ▼
+ PostgreSQL (Supabase)
+```
+
+A aplicação segue o modelo Client-Server desacoplado, permitindo que frontend e backend evoluam independentemente.
+
+---
+
+# 2. Arquitetura do Backend
+
+O backend segue arquitetura modular baseada em responsabilidades bem definidas.
+
+```txt
+Request
+   │
+   ▼
+Route
+   │
+   ▼
+Controller
+   │
+   ▼
+Service
+   │
+   ▼
 Prisma ORM
-↓
-PostgreSQL (Supabase)
+   │
+   ▼
+PostgreSQL
+```
+
+## Camadas
+
+### Routes
+
+Responsáveis pelo mapeamento dos endpoints HTTP.
+
+Exemplos:
+
+```txt
+POST /auth/register
+POST /auth/login
+
+GET /boards
+POST /boards
+DELETE /boards/:id
+
+GET /boards/:boardId/columns
+POST /boards/:boardId/columns
+
+GET /columns/:columnId/cards
+POST /columns/:columnId/cards
+```
 
 ---
 
-## 2. Estrutura de Backend
+### Controllers
 
-O backend segue uma arquitetura em camadas:
+Responsáveis por:
 
-- **Routes** → definição de endpoints HTTP
-- **Controllers** → orquestração de request/response
-- **Services** → regras de negócio
-- **Prisma Client** → persistência de dados
-- **Middleware** → autenticação e validação
+- receber requests
+- validar entradas
+- chamar services
+- formatar responses
 
-### Exemplo de fluxo:
-
-Request → Route → Controller → Service → Prisma → DB
+Não possuem regras de negócio.
 
 ---
 
-## 3. Modelo de Domínio
+### Services
 
-O domínio do sistema segue estrutura hierárquica:
+Contêm toda a lógica de negócio da aplicação.
+
+Exemplos:
+
+- verificar ownership de recursos
+- criar boards
+- criar colunas
+- criar cards
+- autenticar usuários
+- gerar JWT
+
+---
+
+### Prisma ORM
+
+Camada de acesso ao banco de dados.
+
+Responsável por:
+
+- queries
+- inserts
+- updates
+- deletes
+- relacionamentos
+
+---
+
+### Middlewares
+
+Responsáveis por funcionalidades transversais.
+
+Atualmente:
+
+- autenticação JWT
+- tratamento de autorização
+
+---
+
+# 3. Arquitetura do Frontend
+
+O frontend foi desenvolvido com React + Vite utilizando TypeScript.
+
+Após o refactor da interface, a aplicação passou a utilizar:
+
+- Tailwind CSS v4
+- Shadcn/UI
+- Radix UI
+- Sonner
+- Lucide Icons
+
+---
+
+## Estrutura
+
+```txt
+src/
+│
+├── api/
+├── assets/
+├── components/
+│   ├── ui/
+│   ├── ConfirmDialog
+│   ├── EmptyState
+│   ├── Layout
+│   ├── PageHeader
+│   └── Column
+│
+├── context/
+├── hooks/
+├── lib/
+├── pages/
+├── routes/
+├── services/
+├── store/
+├── types/
+└── utils/
+```
+
+---
+
+## Responsabilidades
+
+### api/
+
+Responsável pela comunicação HTTP.
+
+Exemplos:
+
+```txt
+boardsApi
+columnsApi
+cardsApi
+authApi
+```
+
+---
+
+### services/
+
+Camada de abstração sobre regras de autenticação.
+
+Exemplo:
+
+```txt
+authService
+```
+
+---
+
+### context/
+
+Gerenciamento global de autenticação.
+
+Atualmente:
+
+```txt
+AuthContext
+```
+
+Responsável por:
+
+- usuário autenticado
+- login
+- logout
+- persistência de sessão
+
+---
+
+### pages/
+
+Representam as páginas principais da aplicação.
+
+Atualmente:
+
+```txt
+LoginPage
+RegisterPage
+BoardsPage
+BoardPage
+NotFoundPage
+```
+
+---
+
+### components/
+
+Componentes reutilizáveis da aplicação.
+
+Exemplos:
+
+```txt
+Layout
+Column
+PageHeader
+EmptyState
+ConfirmDialog
+```
+
+---
+
+### components/ui/
+
+Componentes fornecidos pelo Shadcn/UI.
+
+Exemplos:
+
+```txt
+Button
+Card
+Input
+Label
+Skeleton
+Dialog
+```
+
+---
+
+# 4. Modelo de Domínio
+
+O domínio segue uma estrutura hierárquica.
 
 ```txt
 User
-    └── Board
-        └── Column
+ └── Board
+      └── Column
             └── Card
 ```
 
-Regras principais:
+---
 
-- Um usuário possui múltiplos boards
-- Um board possui múltiplas colunas
-- Uma coluna possui múltiplos cards
-- Ordenação é controlada via campo `order`
+## User
+
+Representa um usuário autenticado.
+
+Possui:
+
+```txt
+id
+name
+email
+passwordHash
+createdAt
+```
 
 ---
 
-## 4. Decisões Técnicas
+## Board
 
-### 4.1 TypeScript + Node.js
+Representa um quadro Kanban.
 
-Escolhido para garantir:
+Possui:
 
-- tipagem estática
-- escalabilidade do backend
-- melhor DX em refactors
-
----
-
-### 4.2 Prisma ORM
-
-Motivos:
-
-- tipagem automática do schema
-- migrations seguras
-- integração direta com PostgreSQL
-
-Tradeoff:
-
-- abstração acima do SQL pode limitar queries altamente otimizadas
-- menor controle fino de performance comparado a SQL puro
+```txt
+id
+title
+ownerId
+createdAt
+```
 
 ---
 
-### 4.3 PostgreSQL (Supabase)
+## Column
 
-Motivos:
+Representa uma coluna do board.
 
-- banco relacional robusto
-- suporte a constraints e relations fortes
-- infraestrutura gerenciada gratuita
+Possui:
 
-Tradeoff:
-
-- latência levemente maior em comparação a DB local
-- dependência de provider externo
+```txt
+id
+title
+order
+boardId
+```
 
 ---
 
-### 4.4 Autenticação JWT
+## Card
 
-Implementação atual:
+Representa uma tarefa.
 
-- Access token JWT
-- armazenado no frontend via localStorage
+Possui:
 
-Motivo:
+```txt
+id
+title
+order
+columnId
+```
 
-- simplicidade para MVP
-- facilidade de integração com frontend React
+---
 
-Tradeoff:
+## Regras atuais
+
+- usuário possui vários boards
+- board pertence a um único usuário
+- board possui várias colunas
+- coluna possui vários cards
+- ordenação controlada pelo campo order
+
+---
+
+# 5. Autenticação
+
+A autenticação utiliza JWT.
+
+Fluxo:
+
+```txt
+Login
+  │
+  ▼
+Backend valida credenciais
+  │
+  ▼
+JWT gerado
+  │
+  ▼
+Frontend armazena token
+  │
+  ▼
+Requisições autenticadas
+```
+
+---
+
+## Implementação Atual
+
+- JWT Access Token
+- armazenamento em localStorage
+- AuthContext para gerenciamento de sessão
+- rotas protegidas
+
+---
+
+## Tradeoffs
+
+Vantagens:
+
+- simples
+- rápido para MVP
+- fácil integração
+
+Desvantagens:
 
 - vulnerável a XSS
-- não revogável facilmente
-- não é ideal para produção crítica
+- não possui refresh token
+- revogação limitada
 
 ---
 
-## 5. Segurança
+## Evoluções Futuras
 
-### Atual (MVP)
-
-- JWT no localStorage
-- Middleware protegendo rotas
-- validação de input via Zod
-
-### Limitações
-
-- risco de XSS comprometendo tokens
-- ausência de refresh token seguro
-- ausência de httpOnly cookies
-
-### Evolução futura
-
-- migração para httpOnly cookies
-- refresh token rotation
-- blacklist de tokens (opcional)
+- refresh tokens
+- cookies httpOnly
+- token rotation
+- revogação de sessão
 
 ---
 
-## 6. Estrutura de Pastas
+# 6. Experiência do Usuário (Frontend)
+
+A interface passou por uma refatoração completa.
+
+---
+
+## Componentização
+
+Foram criados componentes reutilizáveis:
 
 ```txt
-backend/
-├── src/
-│ ├── modules/
-│ │ ├── auth/
-│ │ ├── boards/
-│ │ ├── columns/ (futuro)
-│ │ └── cards/ (futuro)
-│ ├── middlewares/
-│ ├── lib/
-│ ├── env.ts
-│ ├── server.ts
-│ └── app.ts
-├── prisma/
-├── prisma.config.ts
-```
-
-```txt
-frontend/
-├── src/
-│ ├── pages/
-│ ├── components/
-│ ├── services/
-│ ├── hooks/
-│ └── store/ (futuro)
+PageHeader
+EmptyState
+ConfirmDialog
+Layout
 ```
 
 ---
 
-## 7. WebSockets (Visão Futura)
+## Feedback Visual
 
-O sistema será evoluído para tempo real utilizando WebSockets.
+### Loading
 
-### Casos de uso
+Utilização de Skeletons.
 
-- movimentação de cards em tempo real
-- atualização de colunas sincronizada
-- presença de usuários no board
-- colaboração simultânea
+Exemplos:
 
-### Arquitetura prevista
-
-Frontend ↔ WebSocket Server ↔ Backend State Layer ↔ DB
+- carregamento de boards
+- carregamento de colunas
+- carregamento de cards
 
 ---
 
-## 8. Evolução do Sistema
+### Estados Vazios
 
-### Fase 1 (atual)
+Utilização de EmptyState.
 
-- Auth
-- Boards
-- Estrutura base Kanban
+Exemplos:
 
-### Fase 2
-
-- Columns customizáveis
-- Cards CRUD completo
-
-### Fase 3
-
-- WebSocket realtime sync
-
-### Fase 4
-
-- Drag-and-drop completo
-- otimizações de performance
+```txt
+Nenhum board encontrado
+Nenhuma coluna criada
+Nenhum card criado
+```
 
 ---
 
-## 9. Objetivo do Projeto
+### Feedback de Ações
 
-Este projeto tem como objetivo demonstrar:
+Utilização de Sonner.
 
-- domínio de arquitetura fullstack
-- backend escalável em Node.js
-- modelagem de dados relacional
-- autenticação segura (em evolução)
-- preparação para sistemas realtime
+Exemplos:
+
+```txt
+Board criado
+Board removido
+Conta criada
+Erros de autenticação
+```
 
 ---
+
+### Confirmação de Exclusão
+
+Utilização de ConfirmDialog.
+
+Aplicado em:
+
+```txt
+Boards
+Colunas
+Cards
+```
+
+---
+
+# 7. Decisões Técnicas
+
+## React + TypeScript
+
+Motivos:
+
+- tipagem forte
+- melhor manutenção
+- melhor DX
+- maior segurança em refactors
+
+---
+
+## Vite
+
+Motivos:
+
+- build extremamente rápido
+- ótima experiência de desenvolvimento
+- configuração simples
+
+---
+
+## Tailwind CSS v4
+
+Motivos:
+
+- produtividade
+- consistência visual
+- responsividade simplificada
+
+---
+
+## Shadcn/UI
+
+Motivos:
+
+- componentes acessíveis
+- alta customização
+- sem dependência de runtime próprio
+
+---
+
+## Prisma ORM
+
+Motivos:
+
+- tipagem automática
+- migrations seguras
+- integração excelente com TypeScript
+
+---
+
+## PostgreSQL
+
+Motivos:
+
+- consistência relacional
+- integridade dos dados
+- excelente suporte para sistemas colaborativos
+
+---
+
+# 8. Segurança
+
+Atualmente:
+
+- JWT
+- rotas protegidas
+- ownership validation
+- validação de dados
+- senhas armazenadas com hash
+
+---
+
+Limitações atuais:
+
+- localStorage
+- ausência de refresh token
+- ausência de cookies httpOnly
+
+---
+
+# 9. Melhorias Planejadas
+
+## Backend
+
+### Prioridade Alta
+
+Implementar:
+
+```txt
+GET /boards/:id
+```
+
+Objetivo:
+
+Evitar carregamento completo de boards apenas para obter um único board.
+
+---
+
+### Evolução da Arquitetura
+
+Adicionar:
+
+```txt
+boardsApi.get(id)
+```
+
+e substituir:
+
+```txt
+boardsApi.list()
+→ find(...)
+```
+
+por:
+
+```txt
+boardsApi.get(id)
+```
+
+---
+
+## Frontend
+
+### React Query
+
+Planejado para:
+
+- cache automático
+- sincronização
+- retries
+- invalidação de dados
+
+---
+
+### Pesquisa de Boards
+
+Planejado:
+
+```txt
+campo de busca
++
+botão dedicado de criação
+```
+
+Substituindo o modelo atual.
+
+---
+
+### Grid Melhorado
+
+Planejado:
+
+```txt
+boards em grid mais semelhante ao Jira
+```
+
+---
+
+### BoardPage
+
+Planejado:
+
+```txt
+melhor gerenciamento horizontal de colunas
+```
+
+com experiência mais próxima do Jira/Trello.
+
+---
+
+# 10. Realtime (Futuro)
+
+O sistema foi desenhado para suportar colaboração em tempo real.
+
+Funcionalidades planejadas:
+
+- atualização instantânea de cards
+- movimentação sincronizada
+- criação e remoção em tempo real
+- presença de usuários
+- indicadores de atividade
+
+Arquitetura prevista:
+
+```txt
+Frontend
+    │
+WebSocket
+    │
+Backend
+    │
+PostgreSQL
+```
+
+---
+
+# 11. Estado Atual do Projeto
+
+Implementado:
+
+- autenticação completa
+- registro de usuários
+- login
+- proteção de rotas
+- CRUD de boards
+- CRUD de colunas
+- CRUD de cards
+- responsividade
+- UI moderna com Shadcn/UI
+- feedback visual completo
+- tratamento de erros
+- estados de loading
+- estados vazios
+- confirmação de exclusões
+
+O projeto encontra-se funcional como MVP e preparado para a próxima etapa de evolução arquitetural e funcionalidades em tempo real.
+
+---
+
+# 12. Objetivo do Projeto
+
+Este projeto foi desenvolvido para demonstrar competências em:
+
+- Engenharia de Software
+- Arquitetura Full Stack
+- React
+- TypeScript
+- Node.js
+- Express
+- PostgreSQL
+- Prisma ORM
+- APIs REST
+- Autenticação JWT
+- Design de Interfaces Modernas
+- Componentização
+- Responsividade
+- Boas práticas de manutenção e escalabilidade
+
+Além do produto em si, o foco principal é evidenciar capacidade de evolução contínua, refatoração segura e construção incremental de software de qualidade.

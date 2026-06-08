@@ -1,23 +1,21 @@
 import { Link } from 'react-router-dom';
 
+import { Button } from '@/components/ui/button';
+
 export function NotFoundPage() {
   return (
-    <div
-      style={{
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        marginTop: '5rem',
-        gap: '1rem',
-      }}
-    >
-      <h1>404</h1>
+    <div className="flex min-h-screen flex-col items-center justify-center gap-4 px-4 text-center">
+      <h1 className="text-8xl font-bold tracking-tighter">404</h1>
 
-      <h2>Página não encontrada</h2>
+      <h2 className="text-2xl font-semibold">Página não encontrada</h2>
 
-      <p>A rota informada não existe.</p>
+      <p className="max-w-md text-muted-foreground">
+        Parece que você tentou acessar uma página que não existe.
+      </p>
 
-      <Link to="/">Voltar para o início</Link>
+      <Button asChild>
+        <Link to="/">Voltar para o início</Link>
+      </Button>
     </div>
   );
 }
