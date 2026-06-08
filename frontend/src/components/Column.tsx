@@ -8,7 +8,7 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
-import { EmptyState } from './EmptyState';
+import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { getErrorMessage } from '@/utils/getErrorMessage';

@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { Layout } from '../components/Layout';
-import { LoginPage } from '../pages/LoginPage';
-import { RegisterPage } from '../pages/RegisterPage';
-import { BoardsPage } from '../pages/BoardsPage';
-import { BoardPage } from '../pages/BoardPage';
-import { ProtectedRoute } from './ProtectedRoute';
-import { NotFoundPage } from '../pages/NotFoundPage';
-import { GuestRoute } from './GuestRoute';
+import { Layout } from '@/components/Layout';
+import { LoginPage } from '@/pages/LoginPage';
+import { RegisterPage } from '@/pages/RegisterPage';
+import { BoardsPage } from '@/pages/BoardsPage';
+import { BoardPage } from '@/pages/BoardPage';
+import { ProtectedRoute } from '@/routes/ProtectedRoute';
+import { NotFoundPage } from '@/pages/NotFoundPage';
+import { GuestRoute } from '@/routes/GuestRoute';
 
 export function AppRouter() {
   return (
