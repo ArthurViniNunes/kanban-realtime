@@ -2,7 +2,7 @@ import { boardAccess } from '../../lib/access/board-access.js';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../errors/http-errors.js';
 
-export class ColumnsService {
+class ColumnsService {
   async createColumn(
     userId: string,
     data: { boardId: string; title: string; order: number },
@@ -47,3 +47,5 @@ export class ColumnsService {
     });
   }
 }
+
+export const columnService = new ColumnsService();

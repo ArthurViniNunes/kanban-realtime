@@ -3,7 +3,7 @@ import { boardAccess } from '../../lib/access/board-access.js';
 import { SocketEmitter } from '../../socket/socket-emitter.js';
 import { NotFoundError } from '../../errors/http-errors.js';
 
-export class CardsService {
+class CardsService {
   async createCard(
     userId: string,
     data: { columnId: string; title: string; order: number },
@@ -124,3 +124,5 @@ export class CardsService {
     return { success: true };
   }
 }
+
+export const cardsService = new CardsService();
