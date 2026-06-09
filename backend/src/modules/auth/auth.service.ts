@@ -3,19 +3,19 @@ import { prisma } from '../../lib/prisma.js';
 import bcrypt from 'bcrypt';
 import { signToken } from '../../lib/jwt.js';
 import {
-  BadRequestError,
   UnauthorizedError,
   NotFoundError,
+  ConflictError,
 } from '../../errors/http-errors.js';
 
-export class AuthService {
+class AuthService {
   async register(data: { name: string; email: string; password: string }) {
     const existingUser = await prisma.user.findUnique({
       where: { email: data.email },
     });
 
     if (existingUser) {
-      throw new BadRequestError('Email is already in use');
+      throw new ConflictError('Email is already in use');
     }
 
     const hashedPassword = await bcrypt.hash(data.password, 10);
@@ -45,7 +45,7 @@ export class AuthService {
     }
 
     if (user.deletedAt) {
-      throw new UnauthorizedError('Account has been deleted');
+      throw new ConflictError('Account has been deleted');
     }
 
     const passwordMatch = await bcrypt.compare(data.password, user.password);
@@ -83,7 +83,7 @@ export class AuthService {
     }
 
     if (user.deletedAt) {
-      throw new BadRequestError('User already deleted');
+      throw new ConflictError('User already deleted');
     }
 
     return prisma.user.update({
@@ -94,3 +94,5 @@ export class AuthService {
     });
   }
 }
+
+export const authService = new AuthService();
