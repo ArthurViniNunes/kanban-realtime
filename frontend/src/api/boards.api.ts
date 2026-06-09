@@ -1,10 +1,12 @@
 import { api } from './api';
+import type { Column } from './columns.api';
 
 export interface Board {
   id: string;
   title: string;
   userId: string;
   createdAt: string;
+  columns: Column[];
 }
 
 export const boardsApi = {

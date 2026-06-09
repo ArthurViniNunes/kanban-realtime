@@ -1,9 +1,7 @@
 import { Request, Response } from 'express';
 import { createBoardSchema } from './boards.schemas.js';
-import { BoardsService } from './boards.service.js';
+import { boardsService } from './boards.service.js';
 import { assertStringParam } from '../../lib/http/assertStringParam.js';
-
-const boardsService = new BoardsService();
 
 export class BoardsController {
   /**
@@ -111,6 +109,72 @@ export class BoardsController {
     const boards = await boardsService.listBoards(userId);
 
     return res.json(boards);
+  }
+
+  /**
+   * @openapi
+   * /boards/{id}:
+   *   get:
+   *     security:
+   *       - bearerAuth: []
+   *     tags:
+   *       - Boards
+   *     summary: Get a board by ID
+   *     description: Returns a board with its columns and cards. User must be a member of the board.
+   *     parameters:
+   *       - in: path
+   *         name: id
+   *         required: true
+   *         schema:
+   *           type: string
+   *         description: Board ID
+   *     responses:
+   *       200:
+   *         description: Board with columns and cards
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 id:
+   *                   type: string
+   *                 title:
+   *                   type: string
+   *                 userId:
+   *                   type: string
+   *                 createdAt:
+   *                   type: string
+   *                   format: date-time
+   *                 columns:
+   *                   type: array
+   *                   items:
+   *                     type: object
+   *                     properties:
+   *                       id:
+   *                         type: string
+   *                       title:
+   *                         type: string
+   *                       order:
+   *                         type: number
+   *                       cards:
+   *                         type: array
+   *                         items:
+   *                           type: object
+   *       401:
+   *         description: Unauthorized
+   *       403:
+   *         description: Forbidden (not a member)
+   *       404:
+   *         description: Board not found
+   */
+  async getBoardById(req: Request, res: Response) {
+    const userId = req.user!.sub;
+
+    const id = assertStringParam(req.params.id, 'id');
+
+    const board = await boardsService.getById(userId, id);
+
+    return res.json(board);
   }
 
   /**

@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 interface ColumnProps {
   id: string;
   title: string;
+  cards: Card[];
 }
 
 export function Column({ id, title }: ColumnProps) {

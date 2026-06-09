@@ -1,8 +1,9 @@
 import { prisma } from '../../lib/prisma.js';
 import { boardAccess } from '../../lib/access/board-access.js';
-import { ForbiddenError, NotFoundError } from '../../errors/http-errors.js';
+import { NotFoundError } from '../../errors/http-errors.js';
+import { toBoardDTO } from './mappers/boards.mapper.js';
 
-export class BoardsService {
+class BoardsService {
   async createBoard(userId: string, title: string) {
     return prisma.$transaction(async (tx) => {
       const board = await tx.board.create({
@@ -40,14 +41,26 @@ export class BoardsService {
     });
   }
 
-  async ensureBoardOwner(userId: string, boardId: string) {
-    const member = await prisma.boardMember.findFirst({
-      where: { userId, boardId, role: 'owner' },
+  async getById(userId: string, id: string) {
+    await boardAccess.ensureAccess(userId, id);
+
+    const board = await prisma.board.findUnique({
+      where: { id },
+      include: {
+        columns: {
+          include: {
+            cards: true,
+          },
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
     });
 
-    if (!member) {
-      throw new ForbiddenError('You are not the board owner');
-    }
+    if (!board) return null;
+
+    return toBoardDTO(board);
   }
 
   async deleteBoard(userId: string, boardId: string) {
@@ -78,3 +91,5 @@ export class BoardsService {
     });
   }
 }
+
+export const boardsService = new BoardsService();
