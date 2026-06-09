@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { Column as ColumnComponent } from '../components/Column';
-import { columnsApi, type Column } from '../api/columns.api';
-import { boardsApi } from '../api/boards.api';
+import { Column as ColumnComponent } from '@/components/Column';
+import { columnsApi, type Column } from '@/api/columns.api';
+import { boardsApi } from '@/api/boards.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NotFoundPage } from './NotFoundPage';
@@ -15,37 +15,34 @@ import { getErrorMessage } from '@/utils/getErrorMessage';
 
 export function BoardPage() {
   const { boardId } = useParams();
+
   const [boardNotFound, setBoardNotFound] = useState(false);
   const [columns, setColumns] = useState<Column[]>([]);
   const [boardTitle, setBoardTitle] = useState('');
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
-
-  async function loadColumns() {
-    try {
-      if (!boardId) return;
-
-      const data = await columnsApi.list(boardId);
-
-      setColumns(data);
-    } catch (error) {
-      toast.error(getErrorMessage(error));
-    }
-  }
+  const [creating, setCreating] = useState(false);
 
   async function handleCreateColumn() {
+    setCreating(true);
     try {
       if (!boardId || !title.trim()) return;
 
-      await columnsApi.create(boardId, title, columns.length);
+      const newColumn = await columnsApi.create(
+        boardId,
+        title,
+        columns?.length ?? 0,
+      );
 
       setTitle('');
 
-      await loadColumns();
+      setColumns((prev) => [...prev, newColumn]);
 
       toast.success('Coluna criada');
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -53,7 +50,7 @@ export function BoardPage() {
     try {
       await columnsApi.delete(columnId);
 
-      await loadColumns();
+      setColumns((prev) => prev.filter((c) => c.id !== columnId));
 
       toast.success('Coluna removida');
     } catch (error) {
@@ -61,28 +58,35 @@ export function BoardPage() {
     }
   }
 
-  async function loadBoardTitle() {
-    try {
-      const boards = await boardsApi.list();
+  async function fetchBoard() {
+    setLoading(true);
+    setBoardNotFound(false);
+    if (!boardId) {
+      setBoardNotFound(true);
+      return;
+    }
 
-      const board = boards.find((board) => board.id === boardId);
+    try {
+      const board = await boardsApi.getById(boardId);
 
       if (!board) {
         setBoardNotFound(true);
         return;
       }
       setBoardTitle(board.title);
+      setColumns(board.columns ?? []);
+    } catch {
+      setBoardNotFound(true);
     } finally {
       setLoading(false);
     }
   }
 
   useEffect(() => {
-    loadColumns();
-    loadBoardTitle();
+    fetchBoard();
   }, [boardId]);
 
-  if (boardNotFound) {
+  if (boardNotFound && !loading) {
     return <NotFoundPage />;
   }
 
@@ -117,11 +121,13 @@ export function BoardPage() {
           className="sm:max-w-md"
         />
 
-        <Button onClick={handleCreateColumn}>Criar coluna</Button>
+        <Button onClick={handleCreateColumn} disabled={creating}>
+          {creating ? 'Criando...' : 'Criar coluna'}
+        </Button>
       </div>
 
       <div className="flex items-start gap-4 overflow-x-auto pb-4">
-        {columns.length === 0 ? (
+        {(columns?.length ?? 0) === 0 ? (
           <EmptyState
             title="Nenhuma coluna criada"
             description="Crie sua primeira coluna para começar."
@@ -130,7 +136,11 @@ export function BoardPage() {
           <div className="flex gap-4 overflow-x-auto pb-2">
             {columns.map((column) => (
               <div key={column.id} className="flex shrink-0 flex-col gap-2">
-                <ColumnComponent id={column.id} title={column.title} />
+                <ColumnComponent
+                  id={column.id}
+                  title={column.title}
+                  cards={column.cards}
+                />
 
                 <ConfirmDialog
                   title="Excluir coluna"

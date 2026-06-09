@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { boardsApi, type Board } from '../api/boards.api';
+import { boardsApi, type Board } from '@/api/boards.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,6 +15,7 @@ export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
 
   async function loadBoards() {
     try {
@@ -32,6 +33,8 @@ export function BoardsPage() {
 
   async function handleCreateBoard() {
     try {
+      setCreating(true);
+
       if (!title.trim()) return;
 
       await boardsApi.create(title);
@@ -43,6 +46,8 @@ export function BoardsPage() {
       await loadBoards();
     } catch (error) {
       toast.error(getErrorMessage(error));
+    } finally {
+      setCreating(false);
     }
   }
 
@@ -77,7 +82,9 @@ export function BoardsPage() {
           className="sm:max-w-md"
         />
 
-        <Button onClick={handleCreateBoard}>Criar Board</Button>
+        <Button onClick={handleCreateBoard} disabled={creating}>
+          {creating ? 'Criando...' : 'Criar Board'}
+        </Button>
       </div>
 
       {loading ? (
