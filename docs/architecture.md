@@ -24,7 +24,7 @@ Frontend (React + Vite)
  Prisma ORM
             │
             ▼
- PostgreSQL (Supabase)
+ PostgreSQL
 ```
 
 A aplicação segue o modelo Client-Server desacoplado, permitindo que frontend e backend evoluam independentemente.
@@ -294,8 +294,10 @@ Possui:
 id
 name
 email
-passwordHash
+password (hash)
 createdAt
+updatedAt
+deletedAt
 ```
 
 ---
@@ -309,8 +311,10 @@ Possui:
 ```txt
 id
 title
-ownerId
+order
+boardId
 createdAt
+updatedAt
 ```
 
 ---
@@ -339,8 +343,20 @@ Possui:
 ```txt
 id
 title
+description
 order
 columnId
+createdAt
+updatedAt
+```
+
+## BoardMember
+
+```text
+id
+userId
+boardId
+role
 ```
 
 ---
@@ -576,19 +592,21 @@ Limitações atuais:
 
 ## Backend
 
-### Prioridade Alta
+### Carregamento de Board
 
-Implementar:
+O endpoint abaixo está implementado:
 
-```txt
+```http
 GET /boards/:id
 ```
 
-Objetivo:
+Ele retorna:
 
-Evitar carregamento completo de boards apenas para obter um único board.
+- dados do board;
+- colunas ordenadas;
+- cards ordenados dentro de cada coluna.
 
----
+O frontend utiliza essa resposta como fonte principal do estado do board, evitando uma requisição adicional de cards para cada coluna.
 
 ### Evolução da Arquitetura
 
@@ -662,29 +680,25 @@ com experiência mais próxima do Jira/Trello.
 
 ---
 
-# 10. Realtime (Futuro)
+# 10. Realtime
 
-O sistema foi desenhado para suportar colaboração em tempo real.
+O backend possui a infraestrutura inicial com Socket.IO:
 
-Funcionalidades planejadas:
+- autenticação por JWT;
+- salas por board;
+- validação de membership;
+- presença de usuários;
+- sincronização inicial do board;
+- emissão de criação e exclusão de cards;
+- emissão de movimentação após confirmação da transação.
 
-- atualização instantânea de cards
-- movimentação sincronizada
-- criação e remoção em tempo real
-- presença de usuários
-- indicadores de atividade
+Ainda falta no frontend:
 
-Arquitetura prevista:
-
-```txt
-Frontend
-    │
-WebSocket
-    │
-Backend
-    │
-PostgreSQL
-```
+- estabelecer a conexão Socket.IO;
+- entrar e sair das salas;
+- processar eventos;
+- atualizar o estado local;
+- tratar reconexão e ressincronização.
 
 ---
 

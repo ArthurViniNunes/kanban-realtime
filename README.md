@@ -105,12 +105,17 @@ Database
 
 ## Próximas Evoluções
 
-- Drag and Drop com @dnd-kit
-- Reordenação de cards e colunas
-- Busca de boards
-- WebSockets para colaboração em tempo real
-- Endpoint otimizado GET /boards/:id
-- Skeleton Loading States
+## Próximas Evoluções
+
+- Drag and Drop com `@dnd-kit`
+- Reordenação visual de cards e colunas
+- Integração completa do Socket.IO no frontend
+- Sincronização de movimentações em tempo real
+- Presença de usuários no board
+- Convites e gerenciamento de membros
+- Busca e filtros de boards
+- Pipeline de integração contínua
+- Deploy do frontend e backend
 
 ---
 
@@ -127,7 +132,15 @@ Configure o arquivo `.env` de acordo com `.env.example`:
 
 ```env
 DATABASE_URL=
-JWT_SECRET=
+DIRECT_URL=
+POOLER_URL=
+
+PORT=3333
+API_PUBLIC_URL=http://localhost:3333
+CORS_ORIGINS=http://localhost:5173
+
+JWT_SECRET=""
+JWT_EXPIRES_IN="7d"
 ```
 
 Execute as migrations:
@@ -152,6 +165,12 @@ npm install
 npm run dev
 ```
 
+Configure o arquivo `.env` de acordo com `.env.example`:
+
+```env
+VITE_API_BASE_URL=http://localhost:3333
+```
+
 ---
 
 ### Acesso
@@ -165,14 +184,35 @@ http://localhost:5173
 Backend:
 
 ```text
-http://localhost:3000
+http://localhost:3333
 ```
 
 Swagger:
 
 ```text
-http://localhost:3000/api-docs
+http://localhost:3333/docs
 ```
+
+---
+
+## Verificação de Qualidade
+
+Na raiz do projeto:
+
+```bash
+npm run test -w backend
+npm run typecheck -w backend
+npm run lint -w frontend
+npm run build -w frontend
+```
+
+A aplicação possui testes unitários para:
+
+- autorização de acesso aos boards;
+- validação de ownership;
+- movimentação segura de cards;
+- bloqueio de movimentações entre boards;
+- reindexação de cards nas colunas.
 
 ---
 

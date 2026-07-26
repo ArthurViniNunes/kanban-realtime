@@ -94,34 +94,29 @@ User
 
 ---
 
-## Evoluções Planejadas
+## Estado Atual e Próximas Evoluções
 
-### Performance
+### Implementado
 
-Implementação de:
+- Autenticação JWT
+- Controle de acesso por membership
+- Papéis de usuário tipados
+- Integridade única de membership
+- Exclusões em cascade
+- Endpoint otimizado `GET /boards/:id`
+- Movimentação transacional de cards
+- Reindexação das colunas de origem e destino
+- Emissão de eventos Socket.IO após confirmação da transação
+- Testes unitários de autorização e movimentação
 
-```http
-GET /boards/:id
-```
-
-para evitar carregamento desnecessário de todos os boards.
-
-### Realtime
-
-Preparação para integração futura com:
-
-- WebSockets
-- Socket.IO
-
-### Kanban Avançado
-
-Suporte para:
+### Próximas Evoluções
 
 - Reordenação de colunas
-- Reordenação de cards
-- Movimentação entre colunas
-
----
+- Cliente Socket.IO no frontend
+- Eventos realtime tipados
+- Convites e gerenciamento de membros
+- Testes de integração HTTP
+- Pipeline de CI/CD
 
 ## Executando o Projeto
 
@@ -131,11 +126,19 @@ Instale as dependências:
 npm install
 ```
 
-Configure as variáveis de ambiente:
+Configure as variáveis de ambiente no arquivo `.env` de acordo com `.env.example` no backend e frontend.:
 
 ```env
 DATABASE_URL=
-JWT_SECRET=
+DIRECT_URL=
+POOLER_URL=
+
+PORT=3333
+API_PUBLIC_URL=http://localhost:3333
+CORS_ORIGINS=http://localhost:5173
+
+JWT_SECRET=""
+JWT_EXPIRES_IN="7d"
 ```
 
 Execute as migrations:
@@ -153,8 +156,13 @@ npm run dev
 Servidor disponível em:
 
 ```text
-http://localhost:3000
+http://localhost:3333
 ```
+
+Documentação Swagger:
+
+```text
+http://localhost:3333/docs
 
 ---
 
@@ -167,3 +175,4 @@ http://localhost:3000
 - TypeScript avançado
 - Arquitetura em camadas
 - Documentação OpenAPI
+```
