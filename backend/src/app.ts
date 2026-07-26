@@ -8,11 +8,12 @@ import swaggerUi from 'swagger-ui-express';
 import { swaggerSpec } from './docs/swagger.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import cors from 'cors';
+import { env } from './env.js';
 
 const app = express();
 app.use(
   cors({
-    origin: ['http://localhost:5173'],
+    origin: env.CORS_ORIGINS,
   }),
 );
 

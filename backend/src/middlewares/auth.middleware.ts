@@ -3,7 +3,6 @@ import jwt from 'jsonwebtoken';
 import { env } from '../env.js';
 import { prisma } from '../lib/prisma.js';
 import { UnauthorizedError } from '../errors/http-errors.js';
-import { io } from '../server.js';
 
 type JwtPayload = {
   sub: string;
