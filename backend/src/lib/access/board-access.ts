@@ -1,9 +1,16 @@
-import { prisma } from '../prisma.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { ForbiddenError } from '../../errors/http-errors.js';
+import { prisma } from '../prisma.js';
+
+type BoardAccessClient = Pick<Prisma.TransactionClient, 'boardMember'>;
 
 class BoardAccess {
-  async ensureAccess(userId: string, boardId: string) {
-    const member = await prisma.boardMember.findFirst({
+  async ensureAccess(
+    userId: string,
+    boardId: string,
+    client: BoardAccessClient = prisma,
+  ) {
+    const member = await client.boardMember.findFirst({
       where: { userId, boardId },
     });
 
@@ -12,8 +19,12 @@ class BoardAccess {
     }
   }
 
-  async ensureOwner(userId: string, boardId: string) {
-    const owner = await prisma.boardMember.findFirst({
+  async ensureOwner(
+    userId: string,
+    boardId: string,
+    client: BoardAccessClient = prisma,
+  ) {
+    const owner = await client.boardMember.findFirst({
       where: {
         userId,
         boardId,

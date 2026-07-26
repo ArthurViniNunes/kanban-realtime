@@ -1,7 +1,7 @@
 import { prisma } from '../../lib/prisma.js';
 import { boardAccess } from '../../lib/access/board-access.js';
 import { SocketEmitter } from '../../socket/socket-emitter.js';
-import { NotFoundError } from '../../errors/http-errors.js';
+import { BadRequestError, NotFoundError } from '../../errors/http-errors.js';
 
 class CardsService {
   async createCard(
@@ -50,56 +50,119 @@ class CardsService {
     userId: string,
     data: { cardId: string; toColumnId: string; order: number },
   ) {
-    const card = await prisma.card.findUnique({
-      where: { id: data.cardId },
-      include: { column: true },
+    const result = await prisma.$transaction(async (tx) => {
+      const card = await tx.card.findUnique({
+        where: { id: data.cardId },
+        include: {
+          column: {
+            select: { boardId: true },
+          },
+        },
+      });
+
+      if (!card) {
+        throw new NotFoundError('Card not found');
+      }
+
+      // Valida o acesso ao board de origem.
+      await boardAccess.ensureAccess(userId, card.column.boardId, tx);
+
+      const targetColumn = await tx.column.findUnique({
+        where: { id: data.toColumnId },
+        select: {
+          id: true,
+          boardId: true,
+        },
+      });
+
+      if (!targetColumn) {
+        throw new NotFoundError('Target column not found');
+      }
+
+      // Valida também o acesso ao board de destino.
+      await boardAccess.ensureAccess(userId, targetColumn.boardId, tx);
+
+      // Neste projeto, um card não pode mudar de board.
+      if (card.column.boardId !== targetColumn.boardId) {
+        throw new BadRequestError('Cards cannot be moved between boards');
+      }
+
+      const sourceColumnId = card.columnId;
+      const isSameColumn = sourceColumnId === targetColumn.id;
+
+      const sourceCards = await tx.card.findMany({
+        where: { columnId: sourceColumnId },
+        orderBy: [{ order: 'asc' }, { id: 'asc' }],
+      });
+
+      const sourceWithoutMovedCard = sourceCards.filter(
+        (sourceCard) => sourceCard.id !== card.id,
+      );
+
+      const targetCards = isSameColumn
+        ? sourceWithoutMovedCard
+        : await tx.card.findMany({
+            where: { columnId: targetColumn.id },
+            orderBy: [{ order: 'asc' }, { id: 'asc' }],
+          });
+
+      // A posição máxima permitida é o final da coluna.
+      if (data.order > targetCards.length) {
+        throw new BadRequestError('Invalid target position');
+      }
+
+      const reorderedTargetCards = [...targetCards];
+
+      reorderedTargetCards.splice(data.order, 0, card);
+
+      // Ao trocar de coluna, fecha as lacunas da coluna de origem.
+      if (!isSameColumn) {
+        await Promise.all(
+          sourceWithoutMovedCard.map((sourceCard, order) =>
+            tx.card.update({
+              where: { id: sourceCard.id },
+              data: { order },
+            }),
+          ),
+        );
+      }
+
+      // Reindexa a coluna de destino e move o card.
+      await Promise.all(
+        reorderedTargetCards.map((targetCard, order) =>
+          tx.card.update({
+            where: { id: targetCard.id },
+            data: {
+              columnId: targetColumn.id,
+              order,
+            },
+          }),
+        ),
+      );
+
+      const updatedCard = await tx.card.findUnique({
+        where: { id: card.id },
+      });
+
+      if (!updatedCard) {
+        throw new NotFoundError('Card not found after move');
+      }
+
+      return {
+        boardId: targetColumn.boardId,
+        fromColumnId: sourceColumnId,
+        card: updatedCard,
+      };
     });
 
-    if (!card) throw new NotFoundError('Card not found');
-
-    const targetColumn = await prisma.column.findUnique({
-      where: { id: data.toColumnId },
-      include: { cards: { orderBy: { order: 'asc' } } },
+    // O evento só é emitido depois que a transação termina com sucesso.
+    SocketEmitter.cardMoved(result.boardId, {
+      card: result.card,
+      fromColumnId: result.fromColumnId,
+      toColumnId: data.toColumnId,
     });
 
-    if (!targetColumn) throw new NotFoundError('Target column not found');
-
-    await boardAccess.ensureAccess(userId, targetColumn.boardId);
-
-    // remove card da coluna antiga
-    await prisma.card.update({
-      where: { id: card.id },
-      data: {
-        columnId: data.toColumnId,
-      },
-    });
-
-    // pega cards da coluna destino sem o card movido
-    const otherCards = targetColumn.cards.filter((c) => c.id !== card.id);
-
-    // insere na posição desejada
-    otherCards.splice(data.order, 0, {
-      ...card,
-      columnId: data.toColumnId,
-    });
-
-    // reindex total
-    await Promise.all(
-      otherCards.map((c, index) =>
-        prisma.card.update({
-          where: { id: c.id },
-          data: { order: index },
-        }),
-      ),
-    );
-
-    const updatedCard = await prisma.card.findUnique({
-      where: { id: card.id },
-    });
-
-    if (!updatedCard) throw new NotFoundError('Update failed');
-
-    return updatedCard;
+    return result.card;
   }
 
   async deleteCard(userId: string, cardId: string) {
