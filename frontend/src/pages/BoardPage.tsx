@@ -3,6 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Column as ColumnComponent } from '@/components/Column';
 import { columnsApi, type Column } from '@/api/columns.api';
 import { boardsApi } from '@/api/boards.api';
+import { cardsApi } from '@/api/cards.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NotFoundPage } from './NotFoundPage';
@@ -20,7 +21,9 @@ export function BoardPage() {
   const [columns, setColumns] = useState<Column[]>([]);
   const [boardTitle, setBoardTitle] = useState('');
   const [title, setTitle] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loadedBoardId, setLoadedBoardId] = useState<string | null>(null);
+
+  const loading = loadedBoardId !== boardId;
   const [creating, setCreating] = useState(false);
 
   async function handleCreateColumn() {
@@ -58,33 +61,97 @@ export function BoardPage() {
     }
   }
 
-  async function fetchBoard() {
-    setLoading(true);
-    setBoardNotFound(false);
-    if (!boardId) {
-      setBoardNotFound(true);
-      return;
-    }
-
+  async function handleCreateCard(
+    columnId: string,
+    cardTitle: string,
+    order: number,
+  ): Promise<boolean> {
     try {
-      const board = await boardsApi.getById(boardId);
+      const newCard = await cardsApi.create(columnId, cardTitle, order);
 
-      if (!board) {
-        setBoardNotFound(true);
-        return;
-      }
-      setBoardTitle(board.title);
-      setColumns(board.columns ?? []);
-    } catch {
-      setBoardNotFound(true);
-    } finally {
-      setLoading(false);
+      setColumns((currentColumns) =>
+        currentColumns.map((column) =>
+          column.id === columnId
+            ? {
+                ...column,
+                cards: [...column.cards, newCard],
+              }
+            : column,
+        ),
+      );
+
+      toast.success('Card criado');
+
+      return true;
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+
+      return false;
+    }
+  }
+
+  async function handleDeleteCard(columnId: string, cardId: string) {
+    try {
+      await cardsApi.delete(cardId);
+
+      setColumns((currentColumns) =>
+        currentColumns.map((column) =>
+          column.id === columnId
+            ? {
+                ...column,
+                cards: column.cards
+                  .filter((card) => card.id !== cardId)
+                  .map((card, order) => ({
+                    ...card,
+                    order,
+                  })),
+              }
+            : column,
+        ),
+      );
+
+      toast.success('Card removido');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
     }
   }
 
   useEffect(() => {
-    fetchBoard();
+    if (!boardId) return;
+
+    const currentBoardId: string = boardId;
+    let isActive = true;
+
+    async function loadBoard() {
+      try {
+        const board = await boardsApi.getById(currentBoardId);
+
+        if (!isActive) return;
+
+        setBoardTitle(board.title);
+        setColumns(board.columns ?? []);
+        setBoardNotFound(false);
+      } catch {
+        if (isActive) {
+          setBoardNotFound(true);
+        }
+      } finally {
+        if (isActive) {
+          setLoadedBoardId(currentBoardId);
+        }
+      }
+    }
+
+    void loadBoard();
+
+    return () => {
+      isActive = false;
+    };
   }, [boardId]);
+
+  if (!boardId) {
+    return <NotFoundPage />;
+  }
 
   if (boardNotFound && !loading) {
     return <NotFoundPage />;
@@ -140,6 +207,8 @@ export function BoardPage() {
                   id={column.id}
                   title={column.title}
                   cards={column.cards}
+                  onCreateCard={handleCreateCard}
+                  onDeleteCard={handleDeleteCard}
                 />
 
                 <ConfirmDialog
