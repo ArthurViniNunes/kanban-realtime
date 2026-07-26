@@ -3,6 +3,7 @@ export type CardDTO = {
   title: string;
   description?: string | null;
   columnId: string;
+  order: number;
 };
 
 export type ColumnDTO = {
@@ -30,6 +31,7 @@ type BoardWithRelations = {
       title: string;
       description: string | null;
       columnId: string;
+      order: number;
     }[];
   }[];
 };
@@ -47,6 +49,7 @@ export function toBoardDTO(board: BoardWithRelations): BoardDTO {
         title: card.title,
         description: card.description ?? null,
         columnId: card.columnId,
+        order: card.order,
       })),
     })),
   };
