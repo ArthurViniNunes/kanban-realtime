@@ -13,8 +13,8 @@ export class ColumnsController {
    *       - bearerAuth: []
    *     tags:
    *       - Columns
-  *     summary: Create a column
-  *     description: Creates a column inside a board the user can access.
+   *     summary: Create a column
+   *     description: Creates a column inside a board the user can access.
    *     requestBody:
    *       required: true
    *       content:
@@ -35,13 +35,13 @@ export class ColumnsController {
    *               order:
    *                 type: number
    *                 example: 1
-  *           examples:
-  *             newColumn:
-  *               summary: Create a column in a board
-  *               value:
-  *                 boardId: board_123
-  *                 title: To Do
-  *                 order: 1
+   *           examples:
+   *             newColumn:
+   *               summary: Create a column in a board
+   *               value:
+   *                 boardId: board_123
+   *                 title: To Do
+   *                 order: 1
    *     responses:
    *       201:
    *         description: Column created successfully
@@ -58,56 +58,56 @@ export class ColumnsController {
    *                   type: string
    *                 order:
    *                   type: number
-  *             examples:
-  *               createdColumn:
-  *                 summary: Newly created column
-  *                 value:
-  *                   id: column_01HZG2ABCDEF1234567890
-  *                   boardId: board_123
-  *                   title: To Do
-  *                   order: 1
+   *             examples:
+   *               createdColumn:
+   *                 summary: Newly created column
+   *                 value:
+   *                   id: column_01HZG2ABCDEF1234567890
+   *                   boardId: board_123
+   *                   title: To Do
+   *                   order: 1
    *       400:
-  *         description: Validation or business rule error
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               invalidPayload:
-  *                 summary: Invalid request body
-  *                 value:
-  *                   error: "Invalid request body"
+   *         description: Validation or business rule error
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               invalidPayload:
+   *                 summary: Invalid request body
+   *                 value:
+   *                   error: "Invalid request body"
    *       401:
-  *         description: Unauthorized (missing or invalid token)
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               unauthorized:
-  *                 summary: Token missing or invalid
-  *                 value:
-  *                   error: Unauthorized
+   *         description: Unauthorized (missing or invalid token)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               unauthorized:
+   *                 summary: Token missing or invalid
+   *                 value:
+   *                   error: Unauthorized
    *       403:
-  *         description: Forbidden (no access to board)
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               forbidden:
-  *                 summary: User cannot access board
-  *                 value:
-  *                   error: No access to this board
+   *         description: Forbidden (no access to board)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               forbidden:
+   *                 summary: User cannot access board
+   *                 value:
+   *                   error: No access to this board
    */
   async create(req: Request, res: Response) {
     const parsed = createColumnSchema.safeParse(req.body);
@@ -125,7 +125,7 @@ export class ColumnsController {
 
   /**
    * @openapi
-    * /columns/{boardId}:
+   * /columns/{boardId}:
    *   get:
    *     security:
    *       - bearerAuth: []
@@ -158,60 +158,60 @@ export class ColumnsController {
    *                     type: string
    *                   order:
    *                     type: number
-  *             examples:
-  *               boardColumns:
-  *                 summary: Ordered columns for a board
-  *                 value:
-  *                   - id: column_01HZG2ABCDEF1234567890
-  *                     boardId: board_123
-  *                     title: To Do
-  *                     order: 1
-  *                   - id: column_01HZG2BCDEF12345678901
-  *                     boardId: board_123
-  *                     title: In Progress
-  *                     order: 2
+   *             examples:
+   *               boardColumns:
+   *                 summary: Ordered columns for a board
+   *                 value:
+   *                   - id: column_01HZG2ABCDEF1234567890
+   *                     boardId: board_123
+   *                     title: To Do
+   *                     order: 1
+   *                   - id: column_01HZG2BCDEF12345678901
+   *                     boardId: board_123
+   *                     title: In Progress
+   *                     order: 2
    *       400:
-  *         description: Missing or invalid boardId
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               invalidParam:
-  *                 summary: Board ID missing from route
-  *                 value:
-  *                   error: "Missing required parameter: boardId"
+   *         description: Missing or invalid boardId
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               invalidParam:
+   *                 summary: Board ID missing from route
+   *                 value:
+   *                   error: "Missing required parameter: boardId"
    *       401:
-  *         description: Unauthorized (missing or invalid token)
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               unauthorized:
-  *                 summary: Token missing or invalid
-  *                 value:
-  *                   error: Unauthorized
+   *         description: Unauthorized (missing or invalid token)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               unauthorized:
+   *                 summary: Token missing or invalid
+   *                 value:
+   *                   error: Unauthorized
    *       403:
-  *         description: Forbidden (no board access)
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               forbidden:
-  *                 summary: User cannot access board
-  *                 value:
-  *                   error: No access to this board
+   *         description: Forbidden (no board access)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               forbidden:
+   *                 summary: User cannot access board
+   *                 value:
+   *                   error: No access to this board
    */
   async listByBoard(req: Request, res: Response) {
     const boardId = assertStringParam(req.params.boardId, 'boardId');
@@ -244,61 +244,61 @@ export class ColumnsController {
    *       204:
    *         description: Column deleted successfully
    *       400:
-  *         description: Invalid column id
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               invalidParam:
-  *                 summary: Column ID missing or invalid
-  *                 value:
-  *                   error: "Missing required parameter: id"
+   *         description: Invalid column id
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               invalidParam:
+   *                 summary: Column ID missing or invalid
+   *                 value:
+   *                   error: "Missing required parameter: id"
    *       401:
-  *         description: Unauthorized (missing or invalid token)
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               unauthorized:
-  *                 summary: Token missing or invalid
-  *                 value:
-  *                   error: Unauthorized
+   *         description: Unauthorized (missing or invalid token)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               unauthorized:
+   *                 summary: Token missing or invalid
+   *                 value:
+   *                   error: Unauthorized
    *       403:
-  *         description: Forbidden (no access to board)
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               forbidden:
-  *                 summary: User cannot access board
-  *                 value:
-  *                   error: No access to this board
+   *         description: Forbidden (no access to board)
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               forbidden:
+   *                 summary: User cannot access board
+   *                 value:
+   *                   error: No access to this board
    *       404:
-  *         description: Column not found
-  *         content:
-  *           application/json:
-  *             schema:
-  *               type: object
-  *               properties:
-  *                 error:
-  *                   type: string
-  *             examples:
-  *               notFound:
-  *                 summary: Column ID does not exist
-  *                 value:
-  *                   error: Column not found
+   *         description: Column not found
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               notFound:
+   *                 summary: Column ID does not exist
+   *                 value:
+   *                   error: Column not found
    */
   async delete(req: Request, res: Response) {
     const id = assertStringParam(req.params.id, 'id');

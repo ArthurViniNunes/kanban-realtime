@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { UnauthorizedError } from '../errors/http-errors.js';
+import { env } from '../env.js';
 
 type JwtPayload = {
   sub: string;
@@ -15,7 +16,7 @@ export function socketAuthMiddleware() {
     }
 
     try {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET!) as JwtPayload;
+      const decoded = jwt.verify(token, env.JWT_SECRET) as JwtPayload;
 
       socket.data.user = decoded;
 

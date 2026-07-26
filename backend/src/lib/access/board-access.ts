@@ -1,10 +1,22 @@
-import { prisma } from '../prisma.js';
+import type { Prisma } from '../../generated/prisma/client.js';
 import { ForbiddenError } from '../../errors/http-errors.js';
+import { prisma } from '../prisma.js';
+
+type BoardAccessClient = Pick<Prisma.TransactionClient, 'boardMember'>;
 
 class BoardAccess {
-  async ensureAccess(userId: string, boardId: string) {
-    const member = await prisma.boardMember.findFirst({
-      where: { userId, boardId },
+  async ensureAccess(
+    userId: string,
+    boardId: string,
+    client: BoardAccessClient = prisma,
+  ) {
+    const member = await client.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId,
+          boardId,
+        },
+      },
     });
 
     if (!member) {
@@ -12,16 +24,21 @@ class BoardAccess {
     }
   }
 
-  async ensureOwner(userId: string, boardId: string) {
-    const owner = await prisma.boardMember.findFirst({
+  async ensureOwner(
+    userId: string,
+    boardId: string,
+    client: BoardAccessClient = prisma,
+  ) {
+    const member = await client.boardMember.findUnique({
       where: {
-        userId,
-        boardId,
-        role: 'owner',
+        userId_boardId: {
+          userId,
+          boardId,
+        },
       },
     });
 
-    if (!owner) {
+    if (!member || member.role !== 'owner') {
       throw new ForbiddenError('Only owner allowed');
     }
   }

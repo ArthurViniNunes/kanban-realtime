@@ -14,20 +14,18 @@ import { getErrorMessage } from '@/utils/getErrorMessage';
 export function BoardsPage() {
   const [boards, setBoards] = useState<Board[]>([]);
   const [title, setTitle] = useState('');
-  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
+
+  const loading = !loaded;
   const [creating, setCreating] = useState(false);
 
-  async function loadBoards() {
+  async function refreshBoards() {
     try {
-      setLoading(true);
-
       const data = await boardsApi.list();
 
       setBoards(data);
     } catch (error) {
       toast.error(getErrorMessage(error));
-    } finally {
-      setLoading(false);
     }
   }
 
@@ -43,7 +41,7 @@ export function BoardsPage() {
 
       setTitle('');
 
-      await loadBoards();
+      await refreshBoards();
     } catch (error) {
       toast.error(getErrorMessage(error));
     } finally {
@@ -57,14 +55,38 @@ export function BoardsPage() {
 
       toast.success('Board excluído');
 
-      await loadBoards();
+      await refreshBoards();
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
   }
 
   useEffect(() => {
-    loadBoards();
+    let isActive = true;
+
+    async function loadInitialBoards() {
+      try {
+        const data = await boardsApi.list();
+
+        if (isActive) {
+          setBoards(data);
+        }
+      } catch (error) {
+        if (isActive) {
+          toast.error(getErrorMessage(error));
+        }
+      } finally {
+        if (isActive) {
+          setLoaded(true);
+        }
+      }
+    }
+
+    void loadInitialBoards();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
   return (

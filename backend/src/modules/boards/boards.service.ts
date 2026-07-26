@@ -49,11 +49,11 @@ class BoardsService {
       include: {
         columns: {
           include: {
-            cards: true,
+            cards: {
+              orderBy: [{ order: 'asc' }, { id: 'asc' }],
+            },
           },
-          orderBy: {
-            order: 'asc',
-          },
+          orderBy: [{ order: 'asc' }, { id: 'asc' }],
         },
       },
     });
