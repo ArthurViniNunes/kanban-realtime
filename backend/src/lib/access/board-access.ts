@@ -10,8 +10,13 @@ class BoardAccess {
     boardId: string,
     client: BoardAccessClient = prisma,
   ) {
-    const member = await client.boardMember.findFirst({
-      where: { userId, boardId },
+    const member = await client.boardMember.findUnique({
+      where: {
+        userId_boardId: {
+          userId,
+          boardId,
+        },
+      },
     });
 
     if (!member) {
@@ -24,15 +29,16 @@ class BoardAccess {
     boardId: string,
     client: BoardAccessClient = prisma,
   ) {
-    const owner = await client.boardMember.findFirst({
+    const member = await client.boardMember.findUnique({
       where: {
-        userId,
-        boardId,
-        role: 'owner',
+        userId_boardId: {
+          userId,
+          boardId,
+        },
       },
     });
 
-    if (!owner) {
+    if (!member || member.role !== 'owner') {
       throw new ForbiddenError('Only owner allowed');
     }
   }
