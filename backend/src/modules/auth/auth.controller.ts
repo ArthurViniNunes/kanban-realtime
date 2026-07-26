@@ -76,15 +76,15 @@ export class AuthController {
    *                   type: array
    *                   items:
    *                     type: object
-    *             examples:
-    *               invalidPayload:
-    *                 summary: Missing required fields
-    *                 value:
-    *                   error: Invalid request data
-    *                   errors:
-    *                     - path:
-    *                         - password
-    *                       message: Required
+   *             examples:
+   *               invalidPayload:
+   *                 summary: Missing required fields
+   *                 value:
+   *                   error: Invalid request data
+   *                   errors:
+   *                     - path:
+   *                         - password
+   *                       message: Required
    *       409:
    *         description: User already exists
    *         content:
@@ -94,11 +94,11 @@ export class AuthController {
    *               properties:
    *                 error:
    *                   type: string
-    *             examples:
-    *               userExists:
-    *                 summary: Email already registered
-    *                 value:
-    *                   error: Email is already in use
+   *             examples:
+   *               userExists:
+   *                 summary: Email already registered
+   *                 value:
+   *                   error: Email is already in use
    */
   async register(req: Request, res: Response) {
     const parsed = registerSchema.safeParse(req.body);
@@ -118,8 +118,8 @@ export class AuthController {
    *   post:
    *     tags:
    *       - Auth
-    *     summary: Authenticate user and return JWT token
-    *     description: Validates credentials and returns the user profile plus access token.
+   *     summary: Authenticate user and return JWT token
+   *     description: Validates credentials and returns the user profile plus access token.
    *     requestBody:
    *       required: true
    *       content:
@@ -138,12 +138,12 @@ export class AuthController {
    *                 type: string
    *                 format: password
    *                 example: strongPassword123
-  *           examples:
-  *             returningUser:
-  *               summary: Login after registration
-  *               value:
-  *                 email: john@email.com
-  *                 password: strongPassword123
+   *           examples:
+   *             returningUser:
+   *               summary: Login after registration
+   *               value:
+   *                 email: john@email.com
+   *                 password: strongPassword123
    *     responses:
    *       200:
    *         description: Authentication successful
@@ -161,24 +161,24 @@ export class AuthController {
    *                       type: string
    *                     name:
    *                       type: string
-  *                 auth:
-  *                   type: object
-  *                   properties:
-  *                     accessToken:
-  *                       type: string
-  *                     expiresIn:
-  *                       type: string
-  *             examples:
-  *               authenticatedUser:
-  *                 summary: Login with the same account created in register
-  *                 value:
-  *                   user:
-  *                     id: user_01HZX8Q8Y3V7A1B2C3D4E5F6G7
-  *                     name: John Doe
-  *                     email: john@email.com
-  *                   auth:
-  *                     accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.token
-  *                     expiresIn: 7d
+   *                 auth:
+   *                   type: object
+   *                   properties:
+   *                     accessToken:
+   *                       type: string
+   *                     expiresIn:
+   *                       type: string
+   *             examples:
+   *               authenticatedUser:
+   *                 summary: Login with the same account created in register
+   *                 value:
+   *                   user:
+   *                     id: user_01HZX8Q8Y3V7A1B2C3D4E5F6G7
+   *                     name: John Doe
+   *                     email: john@email.com
+   *                   auth:
+   *                     accessToken: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.example.token
+   *                     expiresIn: 7d
    *       401:
    *         description: Invalid credentials
    *         content:
@@ -188,25 +188,25 @@ export class AuthController {
    *               properties:
    *                 error:
    *                   type: string
-    *             examples:
-    *               invalidCredentials:
-    *                 summary: Wrong password or email
-    *                 value:
-    *                   error: Invalid credentials
-    *       409:
-    *         description: Account already deleted
-    *         content:
-    *           application/json:
-    *             schema:
-    *               type: object
-    *               properties:
-    *                 error:
-    *                   type: string
-    *             examples:
-    *               deletedAccount:
-    *                 summary: Account was soft deleted earlier
-    *                 value:
-    *                   error: Account has been deleted
+   *             examples:
+   *               invalidCredentials:
+   *                 summary: Wrong password or email
+   *                 value:
+   *                   error: Invalid credentials
+   *       409:
+   *         description: Account already deleted
+   *         content:
+   *           application/json:
+   *             schema:
+   *               type: object
+   *               properties:
+   *                 error:
+   *                   type: string
+   *             examples:
+   *               deletedAccount:
+   *                 summary: Account was soft deleted earlier
+   *                 value:
+   *                   error: Account has been deleted
    */
   async login(req: Request, res: Response) {
     const parsed = loginSchema.safeParse(req.body);
@@ -246,14 +246,14 @@ export class AuthController {
    *                 createdAt:
    *                   type: string
    *                   format: date-time
-  *             examples:
-  *               currentUser:
-  *                 summary: Profile of the authenticated user
-  *                 value:
-  *                   id: user_01HZX8Q8Y3V7A1B2C3D4E5F6G7
-  *                   name: John Doe
-  *                   email: john@email.com
-  *                   createdAt: "2026-06-09T10:15:30.000Z"
+   *             examples:
+   *               currentUser:
+   *                 summary: Profile of the authenticated user
+   *                 value:
+   *                   id: user_01HZX8Q8Y3V7A1B2C3D4E5F6G7
+   *                   name: John Doe
+   *                   email: john@email.com
+   *                   createdAt: "2026-06-09T10:15:30.000Z"
    *       401:
    *         description: Unauthorized (missing or invalid token)
    *         content:
@@ -263,11 +263,11 @@ export class AuthController {
    *               properties:
    *                 error:
    *                   type: string
-    *             examples:
-    *               unauthorized:
-    *                 summary: Missing or invalid token
-    *                 value:
-    *                   error: Unauthorized
+   *             examples:
+   *               unauthorized:
+   *                 summary: Missing or invalid token
+   *                 value:
+   *                   error: Unauthorized
    *       404:
    *         description: User not found
    *         content:
@@ -277,11 +277,11 @@ export class AuthController {
    *               properties:
    *                 error:
    *                   type: string
-    *             examples:
-    *               userMissing:
-    *                 summary: User account was deleted or does not exist
-    *                 value:
-    *                   error: User not found
+   *             examples:
+   *               userMissing:
+   *                 summary: User account was deleted or does not exist
+   *                 value:
+   *                   error: User not found
    */
   async me(req: Request, res: Response) {
     const userId = req.user!.sub;
@@ -326,11 +326,11 @@ export class AuthController {
    *                 error:
    *                   type: string
    *                   example: Unauthorized
-    *             examples:
-    *               unauthorized:
-    *                 summary: Token missing or expired
-    *                 value:
-    *                   error: Unauthorized
+   *             examples:
+   *               unauthorized:
+   *                 summary: Token missing or expired
+   *                 value:
+   *                   error: Unauthorized
    *       404:
    *         description: User not found
    *         content:

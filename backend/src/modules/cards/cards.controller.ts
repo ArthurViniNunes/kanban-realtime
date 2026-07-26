@@ -183,7 +183,7 @@ export class CardsController {
    *               invalidParam:
    *                 summary: Column ID missing from route
    *                 value:
-  *                   error: "Missing required parameter: columnId"
+   *                   error: "Missing required parameter: columnId"
    *       401:
    *         description: Unauthorized (missing or invalid token)
    *         content:
@@ -370,7 +370,7 @@ export class CardsController {
    *               invalidParam:
    *                 summary: Invalid card id parameter
    *                 value:
-  *                   error: "Missing required parameter: id"
+   *                   error: "Missing required parameter: id"
    *       401:
    *         description: Unauthorized (missing or invalid token)
    *         content:
