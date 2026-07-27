@@ -28,11 +28,13 @@ export const cardsApi = {
     await api.delete(`/cards/${cardId}`);
   },
 
-  async move(cardId: string, toColumnId: string, order: number) {
-    await api.patch('/cards/move', {
+  async move(cardId: string, toColumnId: string, order: number): Promise<Card> {
+    const response = await api.patch<Card>('/cards/move', {
       cardId,
       toColumnId,
       order,
     });
+
+    return response.data;
   },
 };

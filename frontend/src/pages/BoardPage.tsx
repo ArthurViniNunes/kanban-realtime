@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Column as ColumnComponent } from '@/components/Column';
 import { columnsApi, type Column } from '@/api/columns.api';
@@ -13,6 +13,8 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ConfirmDialog } from '@/components/ConfirmDialog';
 import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/getErrorMessage';
+import { DragDropProvider } from '@dnd-kit/react';
+import { isSortable } from '@dnd-kit/react/sortable';
 
 export function BoardPage() {
   const { boardId } = useParams();
@@ -25,6 +27,18 @@ export function BoardPage() {
 
   const loading = loadedBoardId !== boardId;
   const [creating, setCreating] = useState(false);
+
+  const columnsSnapshot = useRef<Column[]>([]);
+
+  const dragStateRef = useRef<{
+    cardId: string;
+    initialColumnId: string;
+    initialOrder: number;
+    columnId: string;
+    order: number;
+  } | null>(null);
+
+  const movePendingRef = useRef(false);
 
   async function handleCreateColumn() {
     setCreating(true);
@@ -39,7 +53,13 @@ export function BoardPage() {
 
       setTitle('');
 
-      setColumns((prev) => [...prev, newColumn]);
+      setColumns((prev) => [
+        ...prev,
+        {
+          ...newColumn,
+          cards: newColumn.cards ?? [],
+        },
+      ]);
 
       toast.success('Coluna criada');
     } catch (error) {
@@ -193,36 +213,257 @@ export function BoardPage() {
         </Button>
       </div>
 
-      <div className="flex items-start gap-4 overflow-x-auto pb-4">
-        {(columns?.length ?? 0) === 0 ? (
-          <EmptyState
-            title="Nenhuma coluna criada"
-            description="Crie sua primeira coluna para começar."
-          />
-        ) : (
-          <div className="flex gap-4 overflow-x-auto pb-2">
-            {columns.map((column) => (
-              <div key={column.id} className="flex shrink-0 flex-col gap-2">
-                <ColumnComponent
-                  id={column.id}
-                  title={column.title}
-                  cards={column.cards}
-                  onCreateCard={handleCreateCard}
-                  onDeleteCard={handleDeleteCard}
-                />
+      <DragDropProvider
+        onBeforeDragStart={(event) => {
+          if (movePendingRef.current) {
+            event.preventDefault();
+          }
+        }}
+        onDragStart={(event) => {
+          columnsSnapshot.current = structuredClone(columns);
 
-                <ConfirmDialog
-                  title="Excluir coluna"
-                  description="Todos os cards desta coluna serão removidos permanentemente."
-                  onConfirm={() => handleDeleteColumn(column.id)}
-                >
-                  <Button variant="destructive">Excluir coluna</Button>
-                </ConfirmDialog>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
+          const { source } = event.operation;
+
+          if (!isSortable(source)) {
+            dragStateRef.current = null;
+            return;
+          }
+
+          const cardId = String(source.id);
+
+          const sourceColumn = columns.find((column) =>
+            (column.cards ?? []).some((card) => card.id === cardId),
+          );
+
+          const sourceIndex =
+            sourceColumn?.cards.findIndex((card) => card.id === cardId) ?? -1;
+
+          if (!sourceColumn || sourceIndex === -1) {
+            dragStateRef.current = null;
+            return;
+          }
+
+          dragStateRef.current = {
+            cardId,
+            initialColumnId: sourceColumn.id,
+            initialOrder: sourceIndex,
+            columnId: sourceColumn.id,
+            order: sourceIndex,
+          };
+        }}
+        onDragOver={(event) => {
+          const { source, target } = event.operation;
+
+          if (!isSortable(source) || !target) {
+            return;
+          }
+
+          const sourceCardId = String(source.id);
+
+          event.preventDefault();
+
+          const targetGroup = isSortable(target)
+            ? target.group
+            : target.type === 'column'
+              ? target.id
+              : undefined;
+
+          if (typeof targetGroup !== 'string') {
+            return;
+          }
+
+          setColumns((currentColumns) => {
+            const sourceColumn = currentColumns.find((column) =>
+              (column.cards ?? []).some((card) => card.id === sourceCardId),
+            );
+
+            const targetColumn = currentColumns.find(
+              (column) => column.id === targetGroup,
+            );
+
+            if (!sourceColumn || !targetColumn) {
+              return currentColumns;
+            }
+
+            const sourceIndex = (sourceColumn.cards ?? []).findIndex(
+              (card) => card.id === sourceCardId,
+            );
+
+            if (sourceIndex === -1) {
+              return currentColumns;
+            }
+
+            const targetIndex = isSortable(target)
+              ? target.index
+              : (targetColumn.cards?.length ?? 0);
+
+            if (
+              sourceColumn.id === targetColumn.id &&
+              sourceIndex === targetIndex
+            ) {
+              return currentColumns;
+            }
+
+            if (sourceColumn.id === targetColumn.id) {
+              const reorderedCards = [...(sourceColumn.cards ?? [])];
+              const [movedCard] = reorderedCards.splice(sourceIndex, 1);
+
+              if (!movedCard) {
+                return currentColumns;
+              }
+
+              const insertionIndex = Math.max(
+                0,
+                Math.min(targetIndex, reorderedCards.length),
+              );
+
+              reorderedCards.splice(insertionIndex, 0, movedCard);
+
+              if (dragStateRef.current?.cardId === movedCard.id) {
+                dragStateRef.current = {
+                  ...dragStateRef.current,
+                  columnId: sourceColumn.id,
+                  order: insertionIndex,
+                };
+              }
+
+              return currentColumns.map((column) =>
+                column.id === sourceColumn.id
+                  ? {
+                      ...column,
+                      cards: reorderedCards.map((card, order) => ({
+                        ...card,
+                        order,
+                      })),
+                    }
+                  : column,
+              );
+            }
+
+            const sourceCards = [...(sourceColumn.cards ?? [])];
+            const [movedCard] = sourceCards.splice(sourceIndex, 1);
+
+            if (!movedCard) {
+              return currentColumns;
+            }
+
+            const targetCards = [...(targetColumn.cards ?? [])];
+
+            const insertionIndex = Math.max(
+              0,
+              Math.min(targetIndex, targetCards.length),
+            );
+
+            targetCards.splice(insertionIndex, 0, {
+              ...movedCard,
+              columnId: targetColumn.id,
+            });
+
+            if (dragStateRef.current?.cardId === movedCard.id) {
+              dragStateRef.current = {
+                ...dragStateRef.current,
+                columnId: targetColumn.id,
+                order: insertionIndex,
+              };
+            }
+
+            return currentColumns.map((column) => {
+              if (column.id === sourceColumn.id) {
+                return {
+                  ...column,
+                  cards: sourceCards.map((card, order) => ({
+                    ...card,
+                    order,
+                  })),
+                };
+              }
+
+              if (column.id === targetColumn.id) {
+                return {
+                  ...column,
+                  cards: targetCards.map((card, order) => ({
+                    ...card,
+                    order,
+                  })),
+                };
+              }
+
+              return column;
+            });
+          });
+        }}
+        onDragEnd={async (event) => {
+          const dragState = dragStateRef.current;
+          const previousColumns = columnsSnapshot.current;
+
+          if (event.canceled || !event.operation.target) {
+            setColumns(previousColumns);
+            dragStateRef.current = null;
+            return;
+          }
+
+          if (!dragState) {
+            dragStateRef.current = null;
+            return;
+          }
+
+          const positionChanged =
+            dragState.initialColumnId !== dragState.columnId ||
+            dragState.initialOrder !== dragState.order;
+
+          if (!positionChanged) {
+            dragStateRef.current = null;
+            return;
+          }
+
+          movePendingRef.current = true;
+
+          try {
+            await cardsApi.move(
+              dragState.cardId,
+              dragState.columnId,
+              dragState.order,
+            );
+          } catch (error) {
+            setColumns(previousColumns);
+            toast.error(getErrorMessage(error));
+          } finally {
+            movePendingRef.current = false;
+            dragStateRef.current = null;
+          }
+        }}
+      >
+        <div className="flex items-start gap-4 overflow-x-auto pb-4">
+          {columns.length === 0 ? (
+            <EmptyState
+              title="Nenhuma coluna criada"
+              description="Crie sua primeira coluna para começar."
+            />
+          ) : (
+            <div className="flex gap-4 overflow-x-auto pb-2">
+              {columns.map((column) => (
+                <div key={column.id} className="flex shrink-0 flex-col gap-2">
+                  <ColumnComponent
+                    id={column.id}
+                    title={column.title}
+                    cards={column.cards ?? []}
+                    onCreateCard={handleCreateCard}
+                    onDeleteCard={handleDeleteCard}
+                  />
+
+                  <ConfirmDialog
+                    title="Excluir coluna"
+                    description="Todos os cards desta coluna serão removidos permanentemente."
+                    onConfirm={() => handleDeleteColumn(column.id)}
+                  >
+                    <Button variant="destructive">Excluir coluna</Button>
+                  </ConfirmDialog>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </DragDropProvider>
     </div>
   );
 }
