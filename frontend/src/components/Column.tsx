@@ -9,7 +9,8 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { EmptyState } from '@/components/EmptyState';
-import { ConfirmDialog } from '@/components/ConfirmDialog';
+import { SortableCard } from '@/components/SortableCard';
+import { useDroppable } from '@dnd-kit/react';
 
 interface ColumnProps {
   id: string;
@@ -32,6 +33,13 @@ export function Column({
 }: ColumnProps) {
   const [newCardTitle, setNewCardTitle] = useState('');
   const [creating, setCreating] = useState(false);
+
+  const { ref: droppableRef, isDropTarget } = useDroppable({
+    id,
+    type: 'column',
+    accept: 'card',
+    collisionPriority: -1,
+  });
 
   async function handleCreateCard() {
     if (!newCardTitle.trim()) return;
@@ -68,30 +76,27 @@ export function Column({
           </Button>
         </div>
 
-        <div className="flex flex-col gap-2">
+        <div
+          ref={droppableRef}
+          className={[
+            'min-h-20 space-y-2 rounded-md transition-colors',
+            isDropTarget ? 'bg-accent/50 ring-2 ring-primary/40' : '',
+          ].join(' ')}
+        >
           {cards.length === 0 ? (
             <EmptyState
               title="Nenhum card"
-              description="Crie um card para começar."
+              description="Arraste um card para cá ou crie um novo."
             />
           ) : (
-            cards.map((card) => (
-              <div
+            cards.map((card, index) => (
+              <SortableCard
                 key={card.id}
-                className="flex items-center gap-2 rounded-lg border bg-background p-3"
-              >
-                <span className="flex-1 break-words">{card.title}</span>
-
-                <ConfirmDialog
-                  title="Excluir card"
-                  description="Esta ação não pode ser desfeita."
-                  onConfirm={() => onDeleteCard(id, card.id)}
-                >
-                  <Button size="icon" variant="destructive">
-                    ×
-                  </Button>
-                </ConfirmDialog>
-              </div>
+                card={card}
+                index={index}
+                columnId={id}
+                onDelete={onDeleteCard}
+              />
             ))
           )}
         </div>
