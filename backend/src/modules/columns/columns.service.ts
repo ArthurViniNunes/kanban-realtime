@@ -1,6 +1,7 @@
 import { boardAccess } from '../../lib/access/board-access.js';
 import { prisma } from '../../lib/prisma.js';
 import { NotFoundError } from '../../errors/http-errors.js';
+import { SocketEmitter } from '../../socket/socket-emitter.js';
 
 class ColumnsService {
   async createColumn(
@@ -9,9 +10,16 @@ class ColumnsService {
   ) {
     await boardAccess.ensureAccess(userId, data.boardId);
 
-    return prisma.column.create({
+    const column = await prisma.column.create({
       data,
     });
+
+    SocketEmitter.columnCreated(data.boardId, {
+      ...column,
+      cards: [],
+    });
+
+    return column;
   }
 
   async getByBoard(userId: string, boardId: string) {
@@ -37,14 +45,15 @@ class ColumnsService {
 
     await boardAccess.ensureAccess(userId, column.boardId);
 
-    // garante consistência antes de deletar coluna
-    await prisma.card.deleteMany({
-      where: { columnId },
-    });
-
-    return prisma.column.delete({
+    const deletedColumn = await prisma.column.delete({
       where: { id: columnId },
     });
+
+    SocketEmitter.columnDeleted(column.boardId, {
+      columnId,
+    });
+
+    return deletedColumn;
   }
 }
 

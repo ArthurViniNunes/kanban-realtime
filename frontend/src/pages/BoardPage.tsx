@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { Column as ColumnComponent } from '@/components/Column';
 import { columnsApi, type Column } from '@/api/columns.api';
 import { boardsApi } from '@/api/boards.api';
-import { cardsApi } from '@/api/cards.api';
+import { cardsApi, type Card } from '@/api/cards.api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { NotFoundPage } from './NotFoundPage';
@@ -15,6 +15,13 @@ import { toast } from 'sonner';
 import { getErrorMessage } from '@/utils/getErrorMessage';
 import { DragDropProvider } from '@dnd-kit/react';
 import { isSortable } from '@dnd-kit/react/sortable';
+import { connectSocket, disconnectSocket, socket } from '@/socket/socket';
+
+import type {
+  CardDeletedPayload,
+  CardMovedPayload,
+  PresenceUpdatedPayload,
+} from '@/socket/socket-contracts';
 
 export function BoardPage() {
   const { boardId } = useParams();
@@ -38,6 +45,11 @@ export function BoardPage() {
     order: number;
   } | null>(null);
 
+  const [presence, setPresence] = useState<PresenceUpdatedPayload | null>(null);
+
+  const onlineUsers =
+    presence && presence.boardId === boardId ? presence.users : [];
+
   const movePendingRef = useRef(false);
 
   async function handleCreateColumn() {
@@ -53,13 +65,12 @@ export function BoardPage() {
 
       setTitle('');
 
-      setColumns((prev) => [
-        ...prev,
-        {
+      setColumns((currentColumns) =>
+        upsertColumn(currentColumns, {
           ...newColumn,
           cards: newColumn.cards ?? [],
-        },
-      ]);
+        }),
+      );
 
       toast.success('Coluna criada');
     } catch (error) {
@@ -73,7 +84,7 @@ export function BoardPage() {
     try {
       await columnsApi.delete(columnId);
 
-      setColumns((prev) => prev.filter((c) => c.id !== columnId));
+      setColumns((currentColumns) => removeColumn(currentColumns, columnId));
 
       toast.success('Coluna removida');
     } catch (error) {
@@ -89,16 +100,7 @@ export function BoardPage() {
     try {
       const newCard = await cardsApi.create(columnId, cardTitle, order);
 
-      setColumns((currentColumns) =>
-        currentColumns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cards: [...column.cards, newCard],
-              }
-            : column,
-        ),
-      );
+      setColumns((currentColumns) => upsertCard(currentColumns, newCard));
 
       toast.success('Card criado');
 
@@ -110,30 +112,93 @@ export function BoardPage() {
     }
   }
 
-  async function handleDeleteCard(columnId: string, cardId: string) {
+  async function handleDeleteCard(_columnId: string, cardId: string) {
     try {
       await cardsApi.delete(cardId);
 
-      setColumns((currentColumns) =>
-        currentColumns.map((column) =>
-          column.id === columnId
-            ? {
-                ...column,
-                cards: column.cards
-                  .filter((card) => card.id !== cardId)
-                  .map((card, order) => ({
-                    ...card,
-                    order,
-                  })),
-              }
-            : column,
-        ),
-      );
+      setColumns((currentColumns) => removeCard(currentColumns, cardId));
 
       toast.success('Card removido');
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
+  }
+
+  function upsertCard(columns: Column[], card: Card): Column[] {
+    const targetExists = columns.some((column) => column.id === card.columnId);
+
+    if (!targetExists) {
+      return columns;
+    }
+
+    return columns.map((column) => {
+      if (column.id !== card.columnId) {
+        return column;
+      }
+
+      const cardsWithoutDuplicate = (column.cards ?? []).filter(
+        (currentCard) => currentCard.id !== card.id,
+      );
+
+      const insertionIndex = Math.max(
+        0,
+        Math.min(card.order, cardsWithoutDuplicate.length),
+      );
+
+      cardsWithoutDuplicate.splice(insertionIndex, 0, card);
+
+      return {
+        ...column,
+        cards: cardsWithoutDuplicate.map((currentCard, order) => ({
+          ...currentCard,
+          columnId: column.id,
+          order,
+        })),
+      };
+    });
+  }
+
+  function removeCard(columns: Column[], cardId: string): Column[] {
+    return columns.map((column) => {
+      const currentCards = column.cards ?? [];
+
+      if (!currentCards.some((card) => card.id === cardId)) {
+        return column;
+      }
+
+      return {
+        ...column,
+        cards: currentCards
+          .filter((card) => card.id !== cardId)
+          .map((card, order) => ({
+            ...card,
+            order,
+          })),
+      };
+    });
+  }
+
+  function upsertColumn(columns: Column[], newColumn: Column): Column[] {
+    const alreadyExists = columns.some((column) => column.id === newColumn.id);
+
+    if (alreadyExists) {
+      return columns;
+    }
+
+    return [
+      ...columns,
+      {
+        ...newColumn,
+        cards: newColumn.cards ?? [],
+      },
+    ].sort(
+      (left, right) =>
+        left.order - right.order || left.id.localeCompare(right.id),
+    );
+  }
+
+  function removeColumn(columns: Column[], columnId: string): Column[] {
+    return columns.filter((column) => column.id !== columnId);
   }
 
   useEffect(() => {
@@ -169,6 +234,157 @@ export function BoardPage() {
     };
   }, [boardId]);
 
+  // Socket.io event listeners
+  useEffect(() => {
+    if (!boardId) return;
+
+    const currentBoardId = boardId;
+
+    function handleConnect() {
+      socket.emit('board:join', currentBoardId);
+
+      socket.emit('board:sync', currentBoardId, (response) => {
+        if ('error' in response) {
+          toast.error(response.error);
+          return;
+        }
+
+        setBoardTitle(response.title);
+        setColumns(response.columns);
+        setBoardNotFound(false);
+      });
+    }
+
+    function handleCardMoved({ card, toColumnId }: CardMovedPayload) {
+      setColumns((currentColumns) => {
+        const targetExists = currentColumns.some(
+          (column) => column.id === toColumnId,
+        );
+
+        if (!targetExists) {
+          return currentColumns;
+        }
+
+        const columnsWithoutCard = currentColumns.map((column) => {
+          const cardsWithoutMovedCard = (column.cards ?? []).filter(
+            (currentCard) => currentCard.id !== card.id,
+          );
+
+          if (cardsWithoutMovedCard.length === (column.cards ?? []).length) {
+            return column;
+          }
+
+          return {
+            ...column,
+            cards: cardsWithoutMovedCard.map((currentCard, order) => ({
+              ...currentCard,
+              order,
+            })),
+          };
+        });
+
+        return columnsWithoutCard.map((column) => {
+          if (column.id !== toColumnId) {
+            return column;
+          }
+
+          const targetCards = [...(column.cards ?? [])];
+
+          const insertionIndex = Math.max(
+            0,
+            Math.min(card.order, targetCards.length),
+          );
+
+          targetCards.splice(insertionIndex, 0, {
+            ...card,
+            columnId: toColumnId,
+          });
+
+          return {
+            ...column,
+            cards: targetCards.map((currentCard, order) => ({
+              ...currentCard,
+              columnId: toColumnId,
+              order,
+            })),
+          };
+        });
+      });
+    }
+
+    function handleCardCreated(card: Card) {
+      setColumns((currentColumns) => upsertCard(currentColumns, card));
+    }
+
+    function handleCardDeleted({ cardId }: CardDeletedPayload) {
+      setColumns((currentColumns) => removeCard(currentColumns, cardId));
+    }
+
+    function handleColumnCreated(column: Column) {
+      setColumns((currentColumns) => upsertColumn(currentColumns, column));
+    }
+
+    function handleColumnDeleted({ columnId }: { columnId: string }) {
+      setColumns((currentColumns) => removeColumn(currentColumns, columnId));
+    }
+
+    function handlePresenceUpdated(payload: PresenceUpdatedPayload) {
+      if (payload.boardId === currentBoardId) {
+        setPresence(payload);
+      }
+    }
+
+    socket.on('connect', handleConnect);
+
+    socket.on('card:moved', handleCardMoved);
+    socket.on('card:created', handleCardCreated);
+    socket.on('card:deleted', handleCardDeleted);
+
+    socket.on('column:created', handleColumnCreated);
+    socket.on('column:deleted', handleColumnDeleted);
+
+    socket.on('presence:update', handlePresenceUpdated);
+
+    const canConnect = connectSocket();
+
+    if (!canConnect) {
+      socket.off('connect', handleConnect);
+
+      socket.off('card:moved', handleCardMoved);
+      socket.off('card:created', handleCardCreated);
+      socket.off('card:deleted', handleCardDeleted);
+
+      socket.off('column:created', handleColumnCreated);
+      socket.off('column:deleted', handleColumnDeleted);
+
+      socket.off('presence:update', handlePresenceUpdated);
+      return;
+    }
+
+    if (socket.connected) {
+      handleConnect();
+    }
+
+    return () => {
+      if (socket.connected) {
+        socket.emit('board:leave', currentBoardId);
+      }
+
+      socket.off('connect', handleConnect);
+
+      socket.off('card:moved', handleCardMoved);
+      socket.off('card:created', handleCardCreated);
+      socket.off('card:deleted', handleCardDeleted);
+
+      socket.off('column:created', handleColumnCreated);
+      socket.off('column:deleted', handleColumnDeleted);
+
+      socket.off('presence:update', handlePresenceUpdated);
+
+      disconnectSocket();
+    };
+  }, [boardId]);
+
   if (!boardId) {
     return <NotFoundPage />;
   }
@@ -198,6 +414,14 @@ export function BoardPage() {
           title={boardTitle}
           description="Gerencie colunas e cards deste board."
         />
+      )}
+
+      {!loading && presence?.boardId === boardId && (
+        <div className="mb-6 flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="h-2 w-2 rounded-full bg-emerald-500" />
+          {onlineUsers.length}{' '}
+          {onlineUsers.length === 1 ? 'usuário online' : 'usuários online'}
+        </div>
       )}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row">

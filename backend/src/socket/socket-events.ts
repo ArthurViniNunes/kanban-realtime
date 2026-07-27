@@ -1,10 +1,31 @@
-import { Server, Socket } from 'socket.io';
 import { prisma } from '../lib/prisma.js';
+import type { AppSocket, SocketServer } from './socket-instance.js';
 
-export function registerSocketEvents(io: Server) {
-  const boardUsers = new Map<string, Set<string>>();
-  io.on('connection', (socket: Socket) => {
+export function registerSocketEvents(io: SocketServer) {
+  async function emitPresence(boardId: string) {
+    try {
+      const connectedSockets = await io.in(boardId).fetchSockets();
+
+      const users = Array.from(
+        new Set(
+          connectedSockets
+            .map((connectedSocket) => connectedSocket.data.user?.sub)
+            .filter((userId): userId is string => Boolean(userId)),
+        ),
+      );
+
+      io.to(boardId).emit('presence:update', {
+        boardId,
+        users,
+      });
+    } catch (error) {
+      console.error('Failed to update board presence:', error);
+    }
+  }
+
+  io.on('connection', (socket: AppSocket) => {
     const userId = socket.data.user?.sub;
+    const joinedBoards = new Set<string>();
 
     if (!userId) {
       socket.disconnect();
@@ -17,8 +38,13 @@ export function registerSocketEvents(io: Server) {
      * JOIN BOARD ROOM
      */
     socket.on('board:join', async (boardId: string) => {
-      const member = await prisma.boardMember.findFirst({
-        where: { userId, boardId },
+      const member = await prisma.boardMember.findUnique({
+        where: {
+          userId_boardId: {
+            userId,
+            boardId,
+          },
+        },
       });
 
       if (!member) {
@@ -26,43 +52,18 @@ export function registerSocketEvents(io: Server) {
         return;
       }
 
-      socket.join(boardId);
-
-      // 👇 PRESENCE LOGIC
-      if (!boardUsers.has(boardId)) {
-        boardUsers.set(boardId, new Set());
-      }
-
-      boardUsers.get(boardId)!.add(userId);
-
-      // broadcast update
-      io.to(boardId).emit('presence:update', {
-        boardId,
-        users: Array.from(boardUsers.get(boardId)!),
-      });
+      await socket.join(boardId);
+      joinedBoards.add(boardId);
+      await emitPresence(boardId);
     });
 
     /**
      * LEAVE BOARD ROOM
      */
-    socket.on('board:leave', (boardId: string) => {
-      socket.leave(boardId);
-
-      const users = boardUsers.get(boardId);
-
-      if (!users) return;
-
-      users.delete(userId);
-
-      if (users.size === 0) {
-        boardUsers.delete(boardId);
-        return;
-      }
-
-      io.to(boardId).emit('presence:update', {
-        boardId,
-        users: Array.from(users),
-      });
+    socket.on('board:leave', async (boardId: string) => {
+      await socket.leave(boardId);
+      joinedBoards.delete(boardId);
+      await emitPresence(boardId);
     });
 
     /**
@@ -85,10 +86,10 @@ export function registerSocketEvents(io: Server) {
           where: { id: boardId },
           include: {
             columns: {
-              orderBy: { order: 'asc' },
+              orderBy: [{ order: 'asc' }, { id: 'asc' }],
               include: {
                 cards: {
-                  orderBy: { order: 'asc' },
+                  orderBy: [{ order: 'asc' }, { id: 'asc' }],
                 },
               },
             },
@@ -113,20 +114,11 @@ export function registerSocketEvents(io: Server) {
      * DISCONNECT LOGIC
      */
     socket.on('disconnect', () => {
-      for (const [boardId, users] of boardUsers.entries()) {
-        if (users.has(userId)) {
-          users.delete(userId);
-
-          io.to(boardId).emit('presence:update', {
-            boardId,
-            users: Array.from(users),
-          });
-
-          if (users.size === 0) {
-            boardUsers.delete(boardId);
-          }
-        }
+      for (const boardId of joinedBoards) {
+        void emitPresence(boardId);
       }
+
+      joinedBoards.clear();
     });
 
     /**
