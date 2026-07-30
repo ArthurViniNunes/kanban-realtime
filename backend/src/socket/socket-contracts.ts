@@ -32,11 +32,43 @@ export interface PresenceUpdatedPayload {
   boardId: string;
   users: string[];
 }
+export interface RealtimeBoardMemberUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+export interface RealtimeBoardMember {
+  id: string;
+  role: 'owner' | 'admin' | 'member';
+  user: RealtimeBoardMemberUser;
+}
+
+export interface BoardMemberAddedPayload {
+  boardId: string;
+  member: RealtimeBoardMember;
+}
+
+export interface BoardMemberRoleUpdatedPayload {
+  boardId: string;
+  member: RealtimeBoardMember;
+}
+
+export interface BoardMemberRemovedPayload {
+  boardId: string;
+  memberId: string;
+  userId: string;
+}
+
+export interface BoardAccessRevokedPayload {
+  boardId: string;
+}
 
 export interface BoardSyncPayload {
   boardId: string;
   title: string;
   columns: RealtimeColumn[];
+  members: RealtimeBoardMember[];
 }
 
 export type BoardSyncResponse =
@@ -52,6 +84,14 @@ export interface ServerToClientEvents {
   'column:created': (payload: RealtimeColumn) => void;
   'column:deleted': (payload: ColumnDeletedPayload) => void;
   'presence:update': (payload: PresenceUpdatedPayload) => void;
+  'member:added': (payload: BoardMemberAddedPayload) => void;
+
+  'member:role-updated': (payload: BoardMemberRoleUpdatedPayload) => void;
+
+  'member:removed': (payload: BoardMemberRemovedPayload) => void;
+
+  'board:access-revoked': (payload: BoardAccessRevokedPayload) => void;
+
   error: (payload: { message: string }) => void;
   pong: () => void;
 }

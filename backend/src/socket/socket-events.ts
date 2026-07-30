@@ -93,6 +93,19 @@ export function registerSocketEvents(io: SocketServer) {
                 },
               },
             },
+            members: {
+              select: {
+                id: true,
+                role: true,
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                  },
+                },
+              },
+            },
           },
         });
 
@@ -100,10 +113,23 @@ export function registerSocketEvents(io: SocketServer) {
           return callback({ error: 'Board not found' });
         }
 
+        const roleOrder = {
+          owner: 0,
+          admin: 1,
+          member: 2,
+        } as const;
+
+        const members = board.members.sort(
+          (left, right) =>
+            roleOrder[left.role] - roleOrder[right.role] ||
+            left.user.name.localeCompare(right.user.name),
+        );
+
         return callback({
           boardId: board.id,
           title: board.title,
           columns: board.columns,
+          members,
         });
       } catch {
         return callback({ error: 'Failed to sync board' });

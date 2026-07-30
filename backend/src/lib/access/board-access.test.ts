@@ -84,4 +84,54 @@ describe('BoardAccess', () => {
       ).rejects.toEqual(new ForbiddenError('Only owner allowed'));
     });
   });
+
+  describe('ensureCanManageMembers', () => {
+    it.each(['owner', 'admin'] as const)(
+      'allows a user with the %s role',
+      async (role) => {
+        const membership = {
+          id: 'membership-1',
+          userId: 'user-1',
+          boardId: 'board-1',
+          role,
+        };
+
+        mocks.findUnique.mockResolvedValue(membership);
+
+        await expect(
+          boardAccess.ensureCanManageMembers('user-1', 'board-1'),
+        ).resolves.toEqual(membership);
+
+        expect(mocks.findUnique).toHaveBeenCalledWith({
+          where: {
+            userId_boardId: {
+              userId: 'user-1',
+              boardId: 'board-1',
+            },
+          },
+        });
+      },
+    );
+
+    it('rejects a user with the member role', async () => {
+      mocks.findUnique.mockResolvedValue({
+        id: 'membership-1',
+        userId: 'user-1',
+        boardId: 'board-1',
+        role: 'member',
+      });
+
+      await expect(
+        boardAccess.ensureCanManageMembers('user-1', 'board-1'),
+      ).rejects.toThrow('Only owner or admin can manage members');
+    });
+
+    it('rejects a user without membership', async () => {
+      mocks.findUnique.mockResolvedValue(null);
+
+      await expect(
+        boardAccess.ensureCanManageMembers('user-1', 'board-1'),
+      ).rejects.toThrow('Only owner or admin can manage members');
+    });
+  });
 });

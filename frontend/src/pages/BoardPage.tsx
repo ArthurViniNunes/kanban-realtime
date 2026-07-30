@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Column as ColumnComponent } from '@/components/Column';
 import { columnsApi, type Column } from '@/api/columns.api';
 import { boardsApi } from '@/api/boards.api';
@@ -18,13 +18,27 @@ import { isSortable } from '@dnd-kit/react/sortable';
 import { connectSocket, disconnectSocket, socket } from '@/socket/socket';
 
 import type {
+  BoardAccessRevokedPayload,
+  BoardMemberAddedPayload,
+  BoardMemberRemovedPayload,
+  BoardMemberRoleUpdatedPayload,
   CardDeletedPayload,
   CardMovedPayload,
   PresenceUpdatedPayload,
 } from '@/socket/socket-contracts';
 
+import { useAuth } from '@/hooks/useAuth';
+import {
+  boardMemberApi,
+  type BoardMember,
+  type ManageableBoardRole,
+} from '@/api/board-members.api';
+import { BoardMembersPanel } from '@/components/BoardMembersPanel';
+
 export function BoardPage() {
   const { boardId } = useParams();
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [boardNotFound, setBoardNotFound] = useState(false);
   const [columns, setColumns] = useState<Column[]>([]);
@@ -46,6 +60,8 @@ export function BoardPage() {
   } | null>(null);
 
   const [presence, setPresence] = useState<PresenceUpdatedPayload | null>(null);
+
+  const [members, setMembers] = useState<BoardMember[]>([]);
 
   const onlineUsers =
     presence && presence.boardId === boardId ? presence.users : [];
@@ -119,6 +135,71 @@ export function BoardPage() {
       setColumns((currentColumns) => removeCard(currentColumns, cardId));
 
       toast.success('Card removido');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  }
+
+  async function handleAddMember(
+    email: string,
+    role: ManageableBoardRole,
+  ): Promise<boolean> {
+    if (!boardId) return false;
+
+    try {
+      const newMember = await boardMemberApi.add(boardId, {
+        email,
+        role,
+      });
+
+      setMembers((currentMembers) => {
+        const withoutDuplicate = currentMembers.filter(
+          (member) => member.id !== newMember.id,
+        );
+
+        return [...withoutDuplicate, newMember];
+      });
+
+      toast.success('Membro adicionado');
+
+      return true;
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+      return false;
+    }
+  }
+
+  async function handleUpdateMemberRole(
+    memberId: string,
+    role: ManageableBoardRole,
+  ) {
+    if (!boardId) return;
+
+    try {
+      const updateMember = await boardMemberApi.updateRole(boardId, memberId, {
+        role,
+      });
+
+      setMembers((currentMembers) =>
+        currentMembers.map((member) =>
+          member.id === updateMember.id ? updateMember : member,
+        ),
+      );
+      toast.success('Função atualizada');
+    } catch (error) {
+      toast.error(getErrorMessage(error));
+    }
+  }
+
+  async function handleRemoveMember(memberId: string) {
+    if (!boardId) return;
+
+    try {
+      await boardMemberApi.remove(boardId, memberId);
+      setMembers((currentMembers) =>
+        currentMembers.filter((member) => member.id !== memberId),
+      );
+      toast.success('Membro removido');
     } catch (error) {
       toast.error(getErrorMessage(error));
     }
@@ -209,12 +290,16 @@ export function BoardPage() {
 
     async function loadBoard() {
       try {
-        const board = await boardsApi.getById(currentBoardId);
+        const [board, boardMembers] = await Promise.all([
+          boardsApi.getById(currentBoardId),
+          boardMemberApi.list(currentBoardId),
+        ]);
 
         if (!isActive) return;
 
         setBoardTitle(board.title);
         setColumns(board.columns ?? []);
+        setMembers(boardMembers);
         setBoardNotFound(false);
       } catch {
         if (isActive) {
@@ -245,12 +330,28 @@ export function BoardPage() {
 
       socket.emit('board:sync', currentBoardId, (response) => {
         if ('error' in response) {
+          if (response.error === 'Unauthorized') {
+            toast.error('Você não possui mais acesso a este board');
+
+            navigate('/', {
+              replace: true,
+            });
+
+            return;
+          }
+
+          if (response.error === 'Board not found') {
+            setBoardNotFound(true);
+            return;
+          }
+
           toast.error(response.error);
           return;
         }
 
         setBoardTitle(response.title);
         setColumns(response.columns);
+        setMembers(response.members);
         setBoardNotFound(false);
       });
     }
@@ -328,6 +429,57 @@ export function BoardPage() {
       setColumns((currentColumns) => removeColumn(currentColumns, columnId));
     }
 
+    function handleMemberAdded({
+      boardId: eventBoardId,
+      member,
+    }: BoardMemberAddedPayload) {
+      if (eventBoardId !== currentBoardId) return;
+
+      setMembers((currentMembers) => {
+        const withoutDuplicate = currentMembers.filter(
+          (currentMember) => currentMember.id !== member.id,
+        );
+
+        return [...withoutDuplicate, member];
+      });
+    }
+
+    function handleMemberRoleUpdated({
+      boardId: eventBoardId,
+      member,
+    }: BoardMemberRoleUpdatedPayload) {
+      if (eventBoardId !== currentBoardId) return;
+
+      setMembers((currentMembers) =>
+        currentMembers.map((currentMember) =>
+          currentMember.id === member.id ? member : currentMember,
+        ),
+      );
+    }
+
+    function handleMemberRemoved({
+      boardId: eventBoardId,
+      memberId,
+    }: BoardMemberRemovedPayload) {
+      if (eventBoardId !== currentBoardId) return;
+
+      setMembers((currentMembers) =>
+        currentMembers.filter((member) => member.id !== memberId),
+      );
+    }
+
+    function handleAccessRevoked({
+      boardId: revokedBoardId,
+    }: BoardAccessRevokedPayload) {
+      if (revokedBoardId !== currentBoardId) return;
+
+      toast.error('Seu acesso a este board foi removido');
+
+      navigate('/', {
+        replace: true,
+      });
+    }
+
     function handlePresenceUpdated(payload: PresenceUpdatedPayload) {
       if (payload.boardId === currentBoardId) {
         setPresence(payload);
@@ -345,6 +497,11 @@ export function BoardPage() {
 
     socket.on('presence:update', handlePresenceUpdated);
 
+    socket.on('member:added', handleMemberAdded);
+    socket.on('member:role-updated', handleMemberRoleUpdated);
+    socket.on('member:removed', handleMemberRemoved);
+    socket.on('board:access-revoked', handleAccessRevoked);
+
     const canConnect = connectSocket();
 
     if (!canConnect) {
@@ -358,6 +515,11 @@ export function BoardPage() {
       socket.off('column:deleted', handleColumnDeleted);
 
       socket.off('presence:update', handlePresenceUpdated);
+
+      socket.off('member:added', handleMemberAdded);
+      socket.off('member:role-updated', handleMemberRoleUpdated);
+      socket.off('member:removed', handleMemberRemoved);
+      socket.off('board:access-revoked', handleAccessRevoked);
       return;
     }
 
@@ -381,9 +543,14 @@ export function BoardPage() {
 
       socket.off('presence:update', handlePresenceUpdated);
 
+      socket.off('member:added', handleMemberAdded);
+      socket.off('member:role-updated', handleMemberRoleUpdated);
+      socket.off('member:removed', handleMemberRemoved);
+      socket.off('board:access-revoked', handleAccessRevoked);
+
       disconnectSocket();
     };
-  }, [boardId]);
+  }, [boardId, navigate]);
 
   if (!boardId) {
     return <NotFoundPage />;
@@ -421,6 +588,18 @@ export function BoardPage() {
           <span className="h-2 w-2 rounded-full bg-emerald-500" />
           {onlineUsers.length}{' '}
           {onlineUsers.length === 1 ? 'usuário online' : 'usuários online'}
+        </div>
+      )}
+
+      {!loading && user && (
+        <div className="mb-6">
+          <BoardMembersPanel
+            members={members}
+            currentUserId={user.id}
+            onAdd={handleAddMember}
+            onUpdateRole={handleUpdateMemberRole}
+            onRemove={handleRemoveMember}
+          />
         </div>
       )}
 
